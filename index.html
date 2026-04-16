@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mapa de Trabalho — Secretarias do Estado</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --green-dark: #1b5e20;
+      --green-mid: #2e7d32;
+      --green-light: #c8e6c9;
+      --green-pale: #f1f8f2;
+      --red: #c62828;
+      --gray-100: #f5f5f5;
+      --gray-200: #eeeeee;
+      --gray-300: #e0e0e0;
+      --gray-500: #9e9e9e;
+      --gray-700: #616161;
+      --gray-900: #212121;
+      --white: #ffffff;
+      --font: 'IBM Plex Sans', sans-serif;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--gray-100);
+      min-height: 100vh;
+      padding: 32px 16px 64px;
+      color: var(--gray-900);
+    }
+
+    .page-wrapper {
+      max-width: 780px;
+      margin: 0 auto;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: var(--white);
+      border-radius: 6px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.10), 0 0 0 1px rgba(0, 0, 0, 0.04);
+      overflow: hidden;
+    }
+
+    /* ── Header ── */
+    .card-header {
+      border-top: 6px solid var(--green-mid);
+      padding: 24px 28px 20px;
+      border-bottom: 1px solid var(--gray-300);
+    }
+
+    .card-header h1 {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--gray-900);
+      line-height: 1.3;
+      margin-bottom: 6px;
+    }
+
+    .card-header p {
+      font-size: 13px;
+      color: var(--gray-700);
+      margin-bottom: 10px;
+    }
+
+    .required-note {
+      font-size: 12px;
+      color: var(--red);
+    }
+
+    /* ── Fields section ── */
+    .fields-section {
+      padding: 24px 28px 20px;
+      border-bottom: 1px solid var(--gray-300);
+    }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .field-row.single {
+      grid-template-columns: 1fr;
+      max-width: 48%;
+    }
+
+    .field-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .field-group label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--gray-700);
+      margin-bottom: 6px;
+    }
+
+    .field-group label .req {
+      color: var(--red);
+    }
+
+    .field-group input[type="text"],
+    .field-group input[type="email"] {
+      width: 100%;
+      border: none;
+      border-bottom: 1.5px solid var(--gray-300);
+      padding: 7px 0;
+      font-size: 14px;
+      font-family: var(--font);
+      color: var(--gray-900);
+      background: transparent;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .field-group input:focus {
+      border-bottom-color: var(--green-mid);
+    }
+
+    .field-group input::placeholder {
+      color: var(--gray-500);
+    }
+
+    /* ── Items section ── */
+    .items-header {
+      background: var(--green-light);
+      padding: 14px 28px;
+    }
+
+    .items-header h2 {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--green-dark);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+
+    /* ── Table ── */
+    .table-wrapper {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 640px;
+    }
+
+    thead th {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: var(--gray-700);
+      padding: 10px 12px;
+      text-align: left;
+      background: var(--white);
+      border-bottom: 1.5px solid var(--gray-300);
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    tbody tr:last-child {
+      border-bottom: none;
+    }
+
+    tbody tr:hover {
+      background: var(--gray-100);
+    }
+
+    tbody td {
+      padding: 10px 12px;
+      vertical-align: middle;
+    }
+
+    .item-name {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      color: var(--gray-900);
+      line-height: 1.4;
+    }
+
+    /* ── Select ── */
+    .sel-wrap {
+      position: relative;
+      display: inline-block;
+    }
+
+    .sel-wrap select {
+      appearance: none;
+      border: 1px solid var(--gray-300);
+      border-radius: 3px;
+      padding: 5px 24px 5px 8px;
+      font-size: 12px;
+      font-family: var(--font);
+      color: var(--gray-700);
+      background: var(--white);
+      cursor: pointer;
+      min-width: 84px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .sel-wrap select:focus {
+      border-color: var(--green-mid);
+    }
+
+    .sel-wrap::after {
+      content: "▾";
+      position: absolute;
+      right: 7px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 10px;
+      color: var(--gray-500);
+      pointer-events: none;
+    }
+
+    /* ── Text inputs in table ── */
+    .t-input {
+      border: none;
+      border-bottom: 1px solid var(--gray-300);
+      width: 80px;
+      font-size: 12px;
+      font-family: var(--font);
+      color: var(--gray-900);
+      padding: 4px 0;
+      outline: none;
+      background: transparent;
+      transition: border-color 0.15s;
+    }
+
+    .t-input:focus {
+      border-bottom-color: var(--green-mid);
+    }
+
+    .t-input::placeholder {
+      color: var(--gray-500);
+    }
+
+    .t-input.wide {
+      width: 100%;
+    }
+
+    .t-input.qty {
+      width: 52px;
+    }
+
+    /* ── Spec cell (Ponto Energia) ── */
+    .spec-cell {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .spec-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .spec-label {
+      font-size: 10px;
+      color: var(--gray-500);
+      white-space: nowrap;
+      min-width: 52px;
+    }
+
+    /* ── Energy row highlight ── */
+    tr.energy-row {
+      background: var(--green-pale);
+    }
+
+    tr.energy-row:hover {
+      background: #e5f2e6;
+    }
+
+    /* ── Submit ── */
+    .submit-section {
+      padding: 20px 28px 24px;
+      border-top: 1px solid var(--gray-300);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .btn-submit {
+      background: var(--green-mid);
+      color: var(--white);
+      border: none;
+      border-radius: 4px;
+      padding: 11px 28px;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: var(--font);
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+    }
+
+    .btn-submit:hover {
+      background: var(--green-dark);
+    }
+
+    .btn-submit:active {
+      transform: scale(0.98);
+    }
+
+    .btn-submit:disabled {
+      background: var(--gray-500);
+      cursor: not-allowed;
+    }
+
+    .submit-msg {
+      font-size: 13px;
+      display: none;
+    }
+
+    .submit-msg.success {
+      color: var(--green-mid);
+      display: block;
+    }
+
+    .submit-msg.error {
+      color: var(--red);
+      display: block;
+    }
+
+    /* ── Success overlay ── */
+    .success-card {
+      display: none;
+      text-align: center;
+      padding: 48px 28px;
+    }
+
+    .success-card.visible {
+      display: block;
+    }
+
+    .success-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: var(--green-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      font-size: 26px;
+    }
+
+    .success-card h2 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .success-card p {
+      font-size: 14px;
+      color: var(--gray-700);
+    }
+
+    .btn-novo {
+      margin-top: 20px;
+      background: transparent;
+      border: 1.5px solid var(--green-mid);
+      color: var(--green-mid);
+      border-radius: 4px;
+      padding: 9px 22px;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: var(--font);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-novo:hover {
+      background: var(--green-pale);
+    }
+
+    @media (max-width: 520px) {
+      .field-row {
+        grid-template-columns: 1fr;
+      }
+
+      .field-row.single {
+        max-width: 100%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="page-wrapper">
+    <div class="card" id="formCard">
+
+      <div class="card-header">
+        <h1>Mapa de Trabalho — Secretarias do Estado Presente</h1>
+        <p>Formulário para levantamento de itens necessários.</p>
+        <div class="required-note">* Indica uma pergunta obrigatória</div>
+      </div>
+
+      <form id="mainForm" novalidate>
+
+        <div class="fields-section">
+          <div class="field-row">
+            <div class="field-group">
+              <label>Secretaria <span class="req">*</span></label>
+              <input type="text" name="secretaria" placeholder="Sua resposta" required>
+            </div>
+            <div class="field-group">
+              <label>Contato <span class="req">*</span></label>
+              <input type="text" name="contato" placeholder="Sua resposta" required>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label>Telefone <span class="req">*</span></label>
+              <input type="text" name="telefone" placeholder="Sua resposta" required>
+            </div>
+            <div class="field-group">
+              <label>E-mail <span class="req">*</span></label>
+              <input type="email" name="email" placeholder="seuemail@dominio.com" required>
+            </div>
+          </div>
+        </div>
+
+        <!-- Items table -->
+        <div class="items-header">
+          <h2>Itens Necessários</h2>
+        </div>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:14%">Item</th>
+                <th style="width:12%">Necessita?</th>
+                <th style="width:14%">Tipo</th>
+                <th style="width:13%">Fechamento</th>
+                <th style="width:30%">Especificação</th>
+                <th style="width:10%">Qtd.</th>
+              </tr>
+            </thead>
+            <tbody>
+
+              <!-- CADEIRAS -->
+              <tr>
+                <td class="item-name">Cadeiras</td>
+                <td>
+                  <div class="sel-wrap"><select name="cadeiras_necessita">
+                      <option value="">Selecione</option>
+                      <option>Sim</option>
+                      <option>Não</option>
+                    </select></div>
+                </td>
+                <td><input class="t-input wide" name="cadeiras_tipo" placeholder="Tipo"></td>
+                <td><input class="t-input wide" name="cadeiras_fechamento" placeholder="Tipo"></td>
+                <td></td>
+                <td><input class="t-input qty" name="cadeiras_qtd" placeholder="Ex: 6" type="number" min="0"></td>
+              </tr>
+
+              <!-- MESAS -->
+              <tr>
+                <td class="item-name">Mesas</td>
+                <td>
+                  <div class="sel-wrap"><select name="mesas_necessita">
+                      <option value="">Selecione</option>
+                      <option>Sim</option>
+                      <option>Não</option>
+                    </select></div>
+                </td>
+                <td><input class="t-input wide" name="mesas_tipo" placeholder="Tipo"></td>
+                <td><input class="t-input wide" name="mesas_fechamento" placeholder="Tipo"></td>
+                <td></td>
+                <td><input class="t-input qty" name="mesas_qtd" placeholder="Ex: 5" type="number" min="0"></td>
+              </tr>
+
+              <!-- PONTO DE ENERGIA -->
+              <tr class="energy-row">
+                <td class="item-name">Ponto de<br>Energia</td>
+                <td>
+                  <div class="sel-wrap"><select name="energia_necessita">
+                      <option value="">Selecione</option>
+                      <option>Sim</option>
+                      <option>Não</option>
+                    </select></div>
+                </td>
+                <td><input class="t-input wide" name="energia_tipo" placeholder="Tipo"></td>
+                <td><input class="t-input wide" name="energia_fechamento" placeholder="Tipo"></td>
+                <td>
+                  <div class="spec-cell">
+                    <div class="spec-row">
+                      <span class="spec-label">Tensão</span>
+                      <div class="sel-wrap">
+                        <select name="energia_tensao">
+                          <option value="">Selecione</option>
+                          <option>110V</option>
+                          <option>220V</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="spec-row">
+                      <span class="spec-label">Amperagem</span>
+                      <div class="sel-wrap">
+                        <select name="energia_ampere">
+                          <option value="">Selecione</option>
+                          <option>10 AMP</option>
+                          <option>20 AMP</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+                <td><input class="t-input qty" name="energia_qtd" placeholder="Ex: 4" type="number" min="0"></td>
+              </tr>
+
+              <!-- PONTO DE INTERNET -->
+              <tr>
+                <td class="item-name">Ponto de<br>Internet</td>
+                <td>
+                  <div class="sel-wrap"><select name="internet_necessita">
+                      <option value="">Selecione</option>
+                      <option>Sim</option>
+                      <option>Não</option>
+                    </select></div>
+                </td>
+                <td><input class="t-input wide" name="internet_tipo" placeholder="Tipo"></td>
+                <td><input class="t-input wide" name="internet_fechamento" placeholder="Tipo"></td>
+                <td></td>
+                <td><input class="t-input qty" name="internet_qtd" placeholder="" type="number" min="0"></td>
+              </tr>
+
+              <!-- ILUMINAÇÃO -->
+              <tr>
+                <td class="item-name">Iluminação</td>
+                <td>
+                  <div class="sel-wrap"><select name="iluminacao_necessita">
+                      <option value="">Selecione</option>
+                      <option>Sim</option>
+                      <option>Não</option>
+                    </select></div>
+                </td>
+                <td><input class="t-input wide" name="iluminacao_tipo" placeholder="Tipo"></td>
+                <td><input class="t-input wide" name="iluminacao_fechamento" placeholder="Tipo"></td>
+                <td></td>
+                <td><input class="t-input qty" name="iluminacao_qtd" placeholder="" type="number" min="0"></td>
+              </tr>
+
+              <!-- TENDA 3x3 -->
+              <tr>
+                <td class="item-name">Tenda 3x3</td>
+                <td>
+                  <div class="sel-wrap"><select name="tenda3_necessita">
+                      <option value="">Selecione</option>
+                      <option>Sim</option>
+                      <option>Não</option>
+                    </select></div>
+                </td>
+                <td><input class="t-input wide" name="tenda3_tipo" placeholder="Tipo"></td>
+                <td><input class="t-input wide" name="tenda3_fechamento" placeholder="Tipo"></td>
+                <td></td>
+                <td><input class="t-input qty" name="tenda3_qtd" placeholder="" type="number" min="0"></td>
+              </tr>
+
+              <!-- TENDA 4x4 -->
+              <tr>
+                <td class="item-name">Tenda 4x4</td>
+                <td>
+                  <div class="sel-wrap"><select name="tenda4_necessita">
+                      <option value="">Selecione</option>
+                      <option>Sim</option>
+                      <option>Não</option>
+                    </select></div>
+                </td>
+                <td><input class="t-input wide" name="tenda4_tipo" placeholder="Tipo"></td>
+                <td><input class="t-input wide" name="tenda4_fechamento" placeholder="Tipo"></td>
+                <td></td>
+                <td><input class="t-input qty" name="tenda4_qtd" placeholder="" type="number" min="0"></td>
+              </tr>
+
+              <!-- TENDA 5x5 -->
+              <tr>
+                <td class="item-name">Tenda 5x5</td>
+                <td>
+                  <div class="sel-wrap"><select name="tenda5_necessita">
+                      <option value="">Selecione</option>
+                      <option>Sim</option>
+                      <option>Não</option>
+                    </select></div>
+                </td>
+                <td><input class="t-input wide" name="tenda5_tipo" placeholder="Tipo"></td>
+                <td><input class="t-input wide" name="tenda5_fechamento" placeholder="Tipo"></td>
+                <td></td>
+                <td><input class="t-input qty" name="tenda5_qtd" placeholder="" type="number" min="0"></td>
+              </tr>
+
+              <!-- TENDA 6x6 -->
+              <tr>
+                <td class="item-name">Tenda 6x6</td>
+                <td>
+                  <div class="sel-wrap"><select name="tenda6_necessita">
+                      <option value="">Selecione</option>
+                      <option>Sim</option>
+                      <option>Não</option>
+                    </select></div>
+                </td>
+                <td><input class="t-input wide" name="tenda6_tipo" placeholder="Tipo"></td>
+                <td><input class="t-input wide" name="tenda6_fechamento" placeholder="Tipo"></td>
+                <td></td>
+                <td><input class="t-input qty" name="tenda6_qtd" placeholder="" type="number" min="0"></td>
+              </tr>
+
+            </tbody>
+          </table>
+        </div>
+
+        <div class="submit-section">
+          <button type="submit" class="btn-submit" id="submitBtn">Enviar</button>
+          <span class="submit-msg" id="submitMsg"></span>
+        </div>
+
+      </form>
+
+      <!-- Success state -->
+      <div class="success-card" id="successCard">
+        <div class="success-icon">✓</div>
+        <h2>Formulário enviado!</h2>
+        <p>Os dados foram salvos na planilha com sucesso.</p>
+        <button class="btn-novo" onclick="resetForm()">Preencher novo formulário</button>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // ── CONFIGURE AQUI: cole a URL do seu Google Apps Script ──
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyCWyF20slGscay54rctMlTzCW1JAnSQ4IdveA_S1cw6i9Lk1zzaZ1eYVt3XtR-L3SRQg/exec";
+
+    const form = document.getElementById("mainForm");
+    const btn = document.getElementById("submitBtn");
+    const msg = document.getElementById("submitMsg");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      // Basic validation
+      const required = ["secretaria", "contato", "telefone", "email"];
+      let valid = true;
+      required.forEach(name => {
+        const el = form.elements[name];
+        if (!el.value.trim()) { el.style.borderBottomColor = "#c62828"; valid = false; }
+        else { el.style.borderBottomColor = ""; }
+      });
+      if (!valid) {
+        showMsg("Por favor, preencha os campos obrigatórios.", "error");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = "Enviando...";
+      msg.className = "submit-msg";
+
+      // Collect all form data
+      const data = {};
+      new FormData(form).forEach((val, key) => { data[key] = val; });
+      data.timestamp = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+
+      try {
+        await fetch(SCRIPT_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        });
+        document.getElementById("successCard").classList.add("visible");
+        form.style.display = "none";
+      } catch (err) {
+        showMsg("Erro ao enviar. Verifique a conexão e tente novamente.", "error");
+        btn.disabled = false;
+        btn.textContent = "Enviar";
+      }
+    });
+
+    function showMsg(text, type) {
+      msg.textContent = text;
+      msg.className = "submit-msg " + type;
+    }
+
+    function resetForm() {
+      form.reset();
+      form.style.display = "block";
+      document.getElementById("successCard").classList.remove("visible");
+      btn.disabled = false;
+      btn.textContent = "Enviar";
+      msg.className = "submit-msg";
+    }
+  </script>
+</body>
+
+</html>
