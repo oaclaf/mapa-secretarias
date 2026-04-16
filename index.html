@@ -96,6 +96,10 @@
       max-width: 48%;
     }
 
+    .field-row.three-cols {
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+
     .field-row:last-child {
       margin-bottom: 0;
     }
@@ -397,7 +401,7 @@
     }
 
     @media (max-width: 640px) {
-      .field-row {
+      .field-row, .field-row.three-cols {
         grid-template-columns: 1fr;
       }
 
@@ -520,7 +524,7 @@
       <form id="mainForm" novalidate>
 
         <div class="fields-section">
-          <div class="field-row">
+          <div class="field-row three-cols">
             <div class="field-group">
               <label>Secretaria <span class="req">*</span></label>
               <input type="text" name="secretaria" placeholder="Sua resposta" required>
@@ -528,6 +532,10 @@
             <div class="field-group">
               <label>Contato <span class="req">*</span></label>
               <input type="text" name="contato" placeholder="Sua resposta" required>
+            </div>
+            <div class="field-group">
+              <label>Cidade <span class="req">*</span></label>
+              <input type="text" name="cidade" placeholder="Sua resposta" required>
             </div>
           </div>
           <div class="field-row">
@@ -572,7 +580,7 @@
                     </select></div>
                 </td>
                 <td><input class="t-input wide" name="cadeiras_tipo" placeholder="Tipo"></td>
-                <td><input class="t-input wide" name="cadeiras_fechamento" placeholder="Tipo"></td>
+                <td></td>
                 <td></td>
                 <td><input class="t-input qty" name="cadeiras_qtd" placeholder="Ex: 6" type="number" min="0"></td>
               </tr>
@@ -588,7 +596,7 @@
                     </select></div>
                 </td>
                 <td><input class="t-input wide" name="mesas_tipo" placeholder="Tipo"></td>
-                <td><input class="t-input wide" name="mesas_fechamento" placeholder="Tipo"></td>
+                <td></td>
                 <td></td>
                 <td><input class="t-input qty" name="mesas_qtd" placeholder="Ex: 5" type="number" min="0"></td>
               </tr>
@@ -604,7 +612,7 @@
                     </select></div>
                 </td>
                 <td><input class="t-input wide" name="energia_tipo" placeholder="Tipo"></td>
-                <td><input class="t-input wide" name="energia_fechamento" placeholder="Tipo"></td>
+                <td></td>
                 <td>
                   <div class="spec-cell">
                     <div class="spec-row">
@@ -643,7 +651,7 @@
                     </select></div>
                 </td>
                 <td><input class="t-input wide" name="internet_tipo" placeholder="Tipo"></td>
-                <td><input class="t-input wide" name="internet_fechamento" placeholder="Tipo"></td>
+                <td></td>
                 <td></td>
                 <td><input class="t-input qty" name="internet_qtd" placeholder="" type="number" min="0"></td>
               </tr>
@@ -659,7 +667,7 @@
                     </select></div>
                 </td>
                 <td><input class="t-input wide" name="iluminacao_tipo" placeholder="Tipo"></td>
-                <td><input class="t-input wide" name="iluminacao_fechamento" placeholder="Tipo"></td>
+                <td></td>
                 <td></td>
                 <td><input class="t-input qty" name="iluminacao_qtd" placeholder="" type="number" min="0"></td>
               </tr>
@@ -762,7 +770,7 @@
       e.preventDefault();
 
       // Basic validation
-      const required = ["secretaria", "contato", "telefone", "email"];
+      const required = ["secretaria", "contato", "cidade", "telefone", "email"];
       let valid = true;
       required.forEach(name => {
         const el = form.elements[name];
