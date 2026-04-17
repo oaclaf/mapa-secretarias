@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard - Resumo por Cidade</title>
+  <title>Dashboard - Resumo por Cidade e Secretarias</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -11,6 +12,7 @@
       margin: 0;
       padding: 0;
     }
+
     .header {
       background-color: #1b5e20;
       color: white;
@@ -18,18 +20,21 @@
       text-align: center;
       margin-bottom: 20px;
     }
+
     .container {
       max-width: 1200px;
       margin: 0 auto;
       padding: 0 20px;
     }
+
     .dashboard-panel {
       background: white;
       border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       padding: 20px;
       margin-bottom: 20px;
     }
+
     .filters {
       display: flex;
       align-items: center;
@@ -40,10 +45,12 @@
       border-radius: 8px;
       border: 1px solid #c8e6c9;
     }
+
     .filters label {
       font-weight: bold;
       color: #2e7d32;
     }
+
     select {
       padding: 10px;
       font-size: 16px;
@@ -51,40 +58,47 @@
       border-radius: 4px;
       min-width: 250px;
     }
+
     .metrics {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
       gap: 20px;
     }
+
     .metric-card {
       background: #fafafa;
       border: 1px solid #e0e0e0;
       border-radius: 8px;
       padding: 20px;
       text-align: center;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
       transition: transform 0.2s;
     }
+
     .metric-card:hover {
       transform: translateY(-2px);
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
+
     .metric-card h3 {
       font-size: 15px;
       color: #666;
       margin: 0 0 10px 0;
     }
+
     .metric-value {
       font-size: 36px;
       font-weight: bold;
       color: #1b5e20;
     }
+
     .loading {
       text-align: center;
       padding: 40px;
       font-size: 18px;
       color: #666;
     }
+
     .error {
       color: #d32f2f;
       text-align: center;
@@ -93,6 +107,7 @@
       border-radius: 8px;
       display: none;
     }
+
     .config-box {
       margin-bottom: 20px;
       padding: 15px;
@@ -100,12 +115,14 @@
       border: 1px solid #ffe0b2;
       border-radius: 8px;
     }
+
     .config-box input {
       padding: 8px;
       width: 100%;
       box-sizing: border-box;
       margin-top: 5px;
     }
+
     .export-btn {
       padding: 10px 15px;
       font-size: 15px;
@@ -117,20 +134,58 @@
       font-weight: bold;
       transition: background 0.2s;
     }
+
     .export-btn:hover {
       background-color: #2e7d32;
     }
+
     @media print {
-      body { background-color: white; }
-      .header { padding: 10px 0; margin-bottom: 10px; }
-      .config-box, #errorMsg, #loading, .export-btn { display: none !important; }
-      .container { padding: 0; box-shadow: none; max-width: 100%; margin: 0; }
-      .dashboard-panel { box-shadow: none; border: none; padding: 0; margin: 0; }
-      .filters { background: transparent; border: 1px solid #ccc; padding: 10px; margin-bottom: 20px; }
-      .metric-card { border: 1px solid #ccc !important; box-shadow: none !important; break-inside: avoid; }
+      body {
+        background-color: white;
+      }
+
+      .header {
+        padding: 10px 0;
+        margin-bottom: 10px;
+      }
+
+      .config-box,
+      #errorMsg,
+      #loading,
+      .export-btn {
+        display: none !important;
+      }
+
+      .container {
+        padding: 0;
+        box-shadow: none;
+        max-width: 100%;
+        margin: 0;
+      }
+
+      .dashboard-panel {
+        box-shadow: none;
+        border: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      .filters {
+        background: transparent;
+        border: 1px solid #ccc;
+        padding: 10px;
+        margin-bottom: 20px;
+      }
+
+      .metric-card {
+        border: 1px solid #ccc !important;
+        box-shadow: none !important;
+        break-inside: avoid;
+      }
     }
   </style>
 </head>
+
 <body>
 
   <div class="header">
@@ -139,11 +194,12 @@
   </div>
 
   <div class="container">
-    
+
     <div class="config-box" id="configBox">
       <label for="scriptUrl"><strong>URL do Web App (Google Apps Script):</strong></label>
       <input type="text" id="scriptUrl" placeholder="Cole aqui a URL do seu Web App e aperte Enter..." value="">
-      <p style="font-size: 12px; color: #666; margin-top: 5px;">* Deixe em branco se for editar no arquivo .html futuramente.</p>
+      <p style="font-size: 12px; color: #666; margin-top: 5px;">* Deixe em branco se for editar no arquivo .html
+        futuramente.</p>
     </div>
 
     <div id="errorMsg" class="error">Ocorreu um erro ao carregar os dados. Verifique a URL do App Script.</div>
@@ -155,7 +211,7 @@
         <select id="citySelect">
           <option value="ALL">Todas as Cidades</option>
         </select>
-        
+
         <label for="secSelect" style="margin-left: 20px;">Filtrar por Secretaria:</label>
         <select id="secSelect">
           <option value="ALL">Todas as Secretarias</option>
@@ -173,14 +229,14 @@
 
   <script>
     // Coloque SUA URL DO WEB APP aqui se quiser deixar fixo.
-    let SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyCWyF20slGscay54rctMlTzCW1JAnSQ4IdveA_S1cw6i9Lk1zzaZ1eYVt3XtR-L3SRQg/exec"; 
+    let SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyCWyF20slGscay54rctMlTzCW1JAnSQ4IdveA_S1cw6i9Lk1zzaZ1eYVt3XtR-L3SRQg/exec";
 
     let globalData = [];
 
     const urlInput = document.getElementById('scriptUrl');
     urlInput.addEventListener('change', (e) => {
       SCRIPT_URL = e.target.value.trim();
-      if(SCRIPT_URL) {
+      if (SCRIPT_URL) {
         fetchData();
       }
     });
@@ -199,11 +255,11 @@
     ];
 
     async function fetchData() {
-      if(!SCRIPT_URL) {
+      if (!SCRIPT_URL) {
         document.getElementById('loading').style.display = 'none';
         return;
       }
-      
+
       document.getElementById('loading').style.display = 'block';
       document.getElementById('dashboardContent').style.display = 'none';
       document.getElementById('errorMsg').style.display = 'none';
@@ -211,18 +267,18 @@
       try {
         const response = await fetch(SCRIPT_URL + "?action=get_data");
         const result = await response.json();
-        
-        if(result.status === 'ok') {
+
+        if (result.status === 'ok') {
           globalData = result.data;
           populateFilters();
           updateDashboard('ALL', 'ALL');
-          
+
           document.getElementById('loading').style.display = 'none';
           document.getElementById('dashboardContent').style.display = 'block';
         } else {
           throw new Error(result.message);
         }
-      } catch(err) {
+      } catch (err) {
         console.error(err);
         document.getElementById('loading').style.display = 'none';
         document.getElementById('errorMsg').style.display = 'block';
@@ -232,27 +288,27 @@
     function populateFilters() {
       const citySelect = document.getElementById('citySelect');
       const secSelect = document.getElementById('secSelect');
-      
+
       citySelect.innerHTML = '<option value="ALL">Todas as Cidades</option>';
       secSelect.innerHTML = '<option value="ALL">Todas as Secretarias</option>';
-      
+
       const cities = [...new Set(globalData.map(item => item['Cidade']).filter(c => c))].sort();
       const secs = [...new Set(globalData.map(item => item['Secretaria']).filter(s => s))].sort();
-      
+
       cities.forEach(city => {
         const option = document.createElement('option');
         option.value = city;
         option.textContent = city;
         citySelect.appendChild(option);
       });
-      
+
       secs.forEach(sec => {
         const option = document.createElement('option');
         option.value = sec;
         option.textContent = sec;
         secSelect.appendChild(option);
       });
-      
+
       const updateFn = () => updateDashboard(citySelect.value, secSelect.value);
       citySelect.addEventListener('change', updateFn);
       secSelect.addEventListener('change', updateFn);
@@ -261,15 +317,15 @@
     function updateDashboard(selectedCity, selectedSec) {
       const container = document.getElementById('metricsContainer');
       container.innerHTML = '';
-      
+
       let filteredData = globalData;
-      if(selectedCity !== 'ALL') {
+      if (selectedCity !== 'ALL') {
         filteredData = filteredData.filter(item => item['Cidade'] === selectedCity);
       }
-      if(selectedSec !== 'ALL') {
+      if (selectedSec !== 'ALL') {
         filteredData = filteredData.filter(item => item['Secretaria'] === selectedSec);
       }
-      
+
       document.getElementById('recordCount').textContent = `${filteredData.length} formulário(s) encontrado(s)`;
 
       const totals = {};
@@ -278,7 +334,7 @@
       filteredData.forEach(row => {
         keysToSum.forEach(k => {
           const val = parseInt(row[k.key] || 0, 10);
-          if(!isNaN(val)) {
+          if (!isNaN(val)) {
             totals[k.key] += val;
           }
         });
@@ -298,13 +354,14 @@
     }
 
     // Se já tiver URL fixa no código, tenta carregar direto:
-    if(SCRIPT_URL) {
+    if (SCRIPT_URL) {
       document.getElementById('configBox').style.display = 'none';
       fetchData();
     } else {
-       document.getElementById('loading').style.display = 'none';
+      document.getElementById('loading').style.display = 'none';
     }
 
   </script>
 </body>
+
 </html>
