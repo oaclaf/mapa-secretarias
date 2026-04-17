@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Resumo por Cidade</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+    .header {
+      background-color: #1b5e20;
+      color: white;
+      padding: 20px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+    .dashboard-panel {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .filters {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 25px;
+      padding: 15px;
+      background: #e8f5e9;
+      border-radius: 8px;
+      border: 1px solid #c8e6c9;
+    }
+    .filters label {
+      font-weight: bold;
+      color: #2e7d32;
+    }
+    select {
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      min-width: 250px;
+    }
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 20px;
+    }
+    .metric-card {
+      background: #fafafa;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      transition: transform 0.2s;
+    }
+    .metric-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .metric-card h3 {
+      font-size: 15px;
+      color: #666;
+      margin: 0 0 10px 0;
+    }
+    .metric-value {
+      font-size: 36px;
+      font-weight: bold;
+      color: #1b5e20;
+    }
+    .loading {
+      text-align: center;
+      padding: 40px;
+      font-size: 18px;
+      color: #666;
+    }
+    .error {
+      color: #d32f2f;
+      text-align: center;
+      padding: 20px;
+      background: #ffebee;
+      border-radius: 8px;
+      display: none;
+    }
+    .config-box {
+      margin-bottom: 20px;
+      padding: 15px;
+      background: #fff3e0;
+      border: 1px solid #ffe0b2;
+      border-radius: 8px;
+    }
+    .config-box input {
+      padding: 8px;
+      width: 100%;
+      box-sizing: border-box;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>Dashboard de Solicitações</h1>
+    <p>Acompanhamento de Estrutura por Cidade</p>
+  </div>
+
+  <div class="container">
+    
+    <div class="config-box" id="configBox">
+      <label for="scriptUrl"><strong>URL do Web App (Google Apps Script):</strong></label>
+      <input type="text" id="scriptUrl" placeholder="Cole aqui a URL do seu Web App e aperte Enter..." value="">
+      <p style="font-size: 12px; color: #666; margin-top: 5px;">* Deixe em branco se for editar no arquivo .html futuramente.</p>
+    </div>
+
+    <div id="errorMsg" class="error">Ocorreu um erro ao carregar os dados. Verifique a URL do App Script.</div>
+    <div id="loading" class="loading">Carregando dados...</div>
+
+    <div id="dashboardContent" class="dashboard-panel" style="display: none;">
+      <div class="filters">
+        <label for="citySelect">Filtrar por Cidade:</label>
+        <select id="citySelect">
+          <option value="ALL">Todas as Cidades</option>
+        </select>
+        <span id="recordCount" style="margin-left: auto; color: #666; font-size: 14px;"></span>
+      </div>
+
+      <div class="metrics" id="metricsContainer">
+        <!-- Cards serão inseridos aqui via JS -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Coloque SUA URL DO WEB APP aqui se quiser deixar fixo.
+    let SCRIPT_URL = ""; 
+
+    let globalData = [];
+
+    const urlInput = document.getElementById('scriptUrl');
+    urlInput.addEventListener('change', (e) => {
+      SCRIPT_URL = e.target.value.trim();
+      if(SCRIPT_URL) {
+        fetchData();
+      }
+    });
+
+    // Keys mapeadas da planilha originadas pelo cabecalho do Apps Script
+    const keysToSum = [
+      { key: 'Cadeiras — Qtd', label: 'Cadeiras' },
+      { key: 'Mesas — Qtd', label: 'Mesas' },
+      { key: 'Ponto Energia — Qtd', label: 'Pontos de Energia' },
+      { key: 'Ponto Internet — Qtd', label: 'Pontos de Internet' },
+      { key: 'Iluminação — Qtd', label: 'Iluminação' },
+      { key: 'Tenda 3x3 — Qtd', label: 'Tenda 3x3' },
+      { key: 'Tenda 4x4 — Qtd', label: 'Tenda 4x4' },
+      { key: 'Tenda 5x5 — Qtd', label: 'Tenda 5x5' },
+      { key: 'Tenda 6x6 — Qtd', label: 'Tenda 6x6' }
+    ];
+
+    async function fetchData() {
+      if(!SCRIPT_URL) {
+        document.getElementById('loading').style.display = 'none';
+        return;
+      }
+      
+      document.getElementById('loading').style.display = 'block';
+      document.getElementById('dashboardContent').style.display = 'none';
+      document.getElementById('errorMsg').style.display = 'none';
+
+      try {
+        const response = await fetch(SCRIPT_URL + "?action=get_data");
+        const result = await response.json();
+        
+        if(result.status === 'ok') {
+          globalData = result.data;
+          populateCities();
+          updateDashboard('ALL');
+          
+          document.getElementById('loading').style.display = 'none';
+          document.getElementById('dashboardContent').style.display = 'block';
+        } else {
+          throw new Error(result.message);
+        }
+      } catch(err) {
+        console.error(err);
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('errorMsg').style.display = 'block';
+      }
+    }
+
+    function populateCities() {
+      const citySelect = document.getElementById('citySelect');
+      citySelect.innerHTML = '<option value="ALL">Todas as Cidades</option>';
+      
+      const cities = [...new Set(globalData.map(item => item['Cidade']).filter(c => c))].sort();
+      
+      cities.forEach(city => {
+        const option = document.createElement('option');
+        option.value = city;
+        option.textContent = city;
+        citySelect.appendChild(option);
+      });
+      
+      citySelect.addEventListener('change', (e) => {
+        updateDashboard(e.target.value);
+      });
+    }
+
+    function updateDashboard(selectedCity) {
+      const container = document.getElementById('metricsContainer');
+      container.innerHTML = '';
+      
+      let filteredData = globalData;
+      if(selectedCity !== 'ALL') {
+        filteredData = globalData.filter(item => item['Cidade'] === selectedCity);
+      }
+      
+      document.getElementById('recordCount').textContent = `${filteredData.length} formulário(s) encontrado(s)`;
+
+      const totals = {};
+      keysToSum.forEach(k => totals[k.key] = 0);
+
+      filteredData.forEach(row => {
+        keysToSum.forEach(k => {
+          const val = parseInt(row[k.key] || 0, 10);
+          if(!isNaN(val)) {
+            totals[k.key] += val;
+          }
+        });
+      });
+
+      keysToSum.forEach(k => {
+        const value = totals[k.key];
+        // Mostrar todos mesmo zerados, ou você pode querer ocultar os zerados
+        const card = document.createElement('div');
+        card.className = 'metric-card';
+        card.innerHTML = `
+          <h3>${k.label}</h3>
+          <div class="metric-value">${value}</div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // Se já tiver URL fixa no código, tenta carregar direto:
+    if(SCRIPT_URL) {
+      document.getElementById('configBox').style.display = 'none';
+      fetchData();
+    } else {
+       document.getElementById('loading').style.display = 'none';
+    }
+
+  </script>
+</body>
+</html>

@@ -19,8 +19,41 @@ function doPost(e) {
   }
 }
 
-// Permite testar via GET no browser
+// Permite testar via GET no browser ou retornar os dados do painel
 function doGet(e) {
+  if (e && e.parameter && e.parameter.action === 'get_data') {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = ss.getSheetByName(SHEET_NAME);
+    
+    if (!sheet) {
+      return ContentService.createTextOutput(JSON.stringify({ status: "error", message: "Aba não encontrada" }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    const maxRows = sheet.getLastRow();
+    const maxCols = sheet.getLastColumn();
+    
+    if (maxRows <= 1) {
+      return ContentService.createTextOutput(JSON.stringify({ status: "ok", data: [] }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    const dataRange = sheet.getRange(2, 1, maxRows - 1, maxCols);
+    const dataValues = dataRange.getValues();
+    const headers = sheet.getRange(1, 1, 1, maxCols).getValues()[0];
+    
+    const result = dataValues.map(row => {
+      let obj = {};
+      headers.forEach((header, index) => {
+        obj[header] = row[index];
+      });
+      return obj;
+    });
+    
+    return ContentService.createTextOutput(JSON.stringify({ status: "ok", data: result }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
   return ContentService
     .createTextOutput("Script ativo ✓")
     .setMimeType(ContentService.MimeType.TEXT);
