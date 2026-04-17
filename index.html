@@ -788,7 +788,9 @@
 
       // Collect all form data
       const data = {};
-      new FormData(form).forEach((val, key) => { data[key] = val; });
+      new FormData(form).forEach((val, key) => { 
+        data[key] = (key.endsWith("_qtd") && val) ? Number(val) : val; 
+      });
       data.timestamp = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
 
       try {
