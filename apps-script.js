@@ -41,6 +41,7 @@ function saveToSheet(data) {
       "Timestamp",
       "Secretaria",
       "Contato",
+      "Cidade",
       "Telefone",
       "E-mail",
       // Cadeiras
@@ -90,6 +91,7 @@ function saveToSheet(data) {
     data.timestamp             || "",
     data.secretaria            || "",
     data.contato               || "",
+    data.cidade                || "",
     data.telefone              || "",
     data.email                 || "",
     data.cadeiras_necessita    || "",
@@ -119,4 +121,30 @@ function saveToSheet(data) {
     data.tenda5_necessita      || "", data.tenda5_tipo || "", data.tenda5_fechamento || "", data.tenda5_qtd || "",
     data.tenda6_necessita      || "", data.tenda6_tipo || "", data.tenda6_fechamento || "", data.tenda6_qtd || "",
   ]);
+
+  setupTotalSheet(ss);
+}
+
+function setupTotalSheet(ss) {
+  let sheet = ss.getSheetByName("total");
+  if (!sheet) {
+    sheet = ss.insertSheet("total");
+    sheet.appendRow(["Item", "Quantidade Total"]);
+    sheet.appendRow(["Cadeiras", "=SUM(Respostas!J:J)"]);
+    sheet.appendRow(["Mesas", "=SUM(Respostas!N:N)"]);
+    sheet.appendRow(["Ponto Energia", "=SUM(Respostas!T:T)"]);
+    sheet.appendRow(["Ponto Internet", "=SUM(Respostas!X:X)"]);
+    sheet.appendRow(["Iluminação", "=SUM(Respostas!AB:AB)"]);
+    sheet.appendRow(["Tenda 3x3", "=SUM(Respostas!AF:AF)"]);
+    sheet.appendRow(["Tenda 4x4", "=SUM(Respostas!AJ:AJ)"]);
+    sheet.appendRow(["Tenda 5x5", "=SUM(Respostas!AN:AN)"]);
+    sheet.appendRow(["Tenda 6x6", "=SUM(Respostas!AR:AR)"]);
+
+    const headerRange = sheet.getRange("A1:B1");
+    headerRange.setBackground("#1b5e20");
+    headerRange.setFontColor("#ffffff");
+    headerRange.setFontWeight("bold");
+    sheet.setFrozenRows(1);
+    sheet.autoResizeColumns(1, 2);
+  }
 }
