@@ -401,7 +401,9 @@
     }
 
     @media (max-width: 640px) {
-      .field-row, .field-row.three-cols {
+
+      .field-row,
+      .field-row.three-cols {
         grid-template-columns: 1fr;
       }
 
@@ -417,7 +419,12 @@
         min-width: 100%;
       }
 
-      table, thead, tbody, th, td, tr {
+      table,
+      thead,
+      tbody,
+      th,
+      td,
+      tr {
         display: block;
       }
 
@@ -430,7 +437,7 @@
         border: 1px solid var(--gray-300);
         border-radius: 6px;
         background: var(--white);
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
       }
 
       tbody tr:hover {
@@ -440,7 +447,7 @@
       tbody tr.energy-row {
         background: var(--green-pale);
       }
-      
+
       tbody tr.energy-row:hover {
         background: var(--green-pale);
       }
@@ -470,12 +477,29 @@
         flex-shrink: 0;
       }
 
-      tbody td:nth-child(1)::before { content: "Item"; }
-      tbody td:nth-child(2)::before { content: "Necessita?"; }
-      tbody td:nth-child(3)::before { content: "Tipo"; }
-      tbody td:nth-child(4)::before { content: "Fechamento"; }
-      tbody td:nth-child(5)::before { content: "Especificação"; }
-      tbody td:nth-child(6)::before { content: "Qtd."; }
+      tbody td:nth-child(1)::before {
+        content: "Item";
+      }
+
+      tbody td:nth-child(2)::before {
+        content: "Necessita?";
+      }
+
+      tbody td:nth-child(3)::before {
+        content: "Tipo";
+      }
+
+      tbody td:nth-child(4)::before {
+        content: "Fechamento";
+      }
+
+      tbody td:nth-child(5)::before {
+        content: "Especificação";
+      }
+
+      tbody td:nth-child(6)::before {
+        content: "Qtd.";
+      }
 
       .item-name {
         text-align: right;
@@ -489,7 +513,7 @@
         margin-left: 20px;
         text-align: right;
       }
-      
+
       .t-input.qty {
         text-align: right;
       }
@@ -498,11 +522,11 @@
         padding-right: 24px;
         padding-left: 10px;
       }
-      
+
       .spec-cell {
         align-items: flex-end;
       }
-      
+
       .spec-row {
         justify-content: flex-end;
       }
@@ -561,7 +585,7 @@
               <tr>
                 <th style="width:14%">Item</th>
                 <th style="width:12%">Necessita?</th>
-                <th style="width:14%">Tipo</th>
+                <th style="width:14%">OBS:</th>
                 <th style="width:13%">Fechamento</th>
                 <th style="width:30%">Especificação(Ponto Energia)</th>
                 <th style="width:10%">Qtd.</th>
@@ -788,8 +812,8 @@
 
       // Collect all form data
       const data = {};
-      new FormData(form).forEach((val, key) => { 
-        data[key] = (key.endsWith("_qtd") && val) ? Number(val) : val; 
+      new FormData(form).forEach((val, key) => {
+        data[key] = (key.endsWith("_qtd") && val) ? Number(val) : val;
       });
       data.timestamp = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
 
