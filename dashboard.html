@@ -132,6 +132,12 @@
         <select id="citySelect">
           <option value="ALL">Todas as Cidades</option>
         </select>
+        
+        <label for="secSelect" style="margin-left: 20px;">Filtrar por Secretaria:</label>
+        <select id="secSelect">
+          <option value="ALL">Todas as Secretarias</option>
+        </select>
+
         <span id="recordCount" style="margin-left: auto; color: #666; font-size: 14px;"></span>
       </div>
 
@@ -184,8 +190,8 @@
         
         if(result.status === 'ok') {
           globalData = result.data;
-          populateCities();
-          updateDashboard('ALL');
+          populateFilters();
+          updateDashboard('ALL', 'ALL');
           
           document.getElementById('loading').style.display = 'none';
           document.getElementById('dashboardContent').style.display = 'block';
@@ -199,11 +205,15 @@
       }
     }
 
-    function populateCities() {
+    function populateFilters() {
       const citySelect = document.getElementById('citySelect');
+      const secSelect = document.getElementById('secSelect');
+      
       citySelect.innerHTML = '<option value="ALL">Todas as Cidades</option>';
+      secSelect.innerHTML = '<option value="ALL">Todas as Secretarias</option>';
       
       const cities = [...new Set(globalData.map(item => item['Cidade']).filter(c => c))].sort();
+      const secs = [...new Set(globalData.map(item => item['Secretaria']).filter(s => s))].sort();
       
       cities.forEach(city => {
         const option = document.createElement('option');
@@ -212,18 +222,28 @@
         citySelect.appendChild(option);
       });
       
-      citySelect.addEventListener('change', (e) => {
-        updateDashboard(e.target.value);
+      secs.forEach(sec => {
+        const option = document.createElement('option');
+        option.value = sec;
+        option.textContent = sec;
+        secSelect.appendChild(option);
       });
+      
+      const updateFn = () => updateDashboard(citySelect.value, secSelect.value);
+      citySelect.addEventListener('change', updateFn);
+      secSelect.addEventListener('change', updateFn);
     }
 
-    function updateDashboard(selectedCity) {
+    function updateDashboard(selectedCity, selectedSec) {
       const container = document.getElementById('metricsContainer');
       container.innerHTML = '';
       
       let filteredData = globalData;
       if(selectedCity !== 'ALL') {
-        filteredData = globalData.filter(item => item['Cidade'] === selectedCity);
+        filteredData = filteredData.filter(item => item['Cidade'] === selectedCity);
+      }
+      if(selectedSec !== 'ALL') {
+        filteredData = filteredData.filter(item => item['Secretaria'] === selectedSec);
       }
       
       document.getElementById('recordCount').textContent = `${filteredData.length} formulário(s) encontrado(s)`;
