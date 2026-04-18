@@ -638,30 +638,21 @@
                 <td><input class="t-input wide" name="energia_tipo" placeholder="OBS:"></td>
                 <td></td>
                 <td>
-                  <div class="spec-cell">
+                  <div class="spec-cell" style="gap: 15px; padding-top: 4px;">
                     <div class="spec-row">
-                      <span class="spec-label">Tensão</span>
-                      <div class="sel-wrap">
-                        <select name="energia_tensao">
-                          <option value="">Selecione</option>
-                          <option>110V</option>
-                          <option>220V</option>
-                        </select>
-                      </div>
+                      <span class="spec-label" style="font-weight: 600; font-size: 11px;">110/ 10 amp</span>
                     </div>
                     <div class="spec-row">
-                      <span class="spec-label">Amperagem</span>
-                      <div class="sel-wrap">
-                        <select name="energia_ampere">
-                          <option value="">Selecione</option>
-                          <option>10 AMP</option>
-                          <option>20 AMP</option>
-                        </select>
-                      </div>
+                      <span class="spec-label" style="font-weight: 600; font-size: 11px;">220/ 20 amp</span>
                     </div>
                   </div>
                 </td>
-                <td><input class="t-input qty" name="energia_qtd" placeholder="Ex: 4" type="number" min="0"></td>
+                <td>
+                  <div class="spec-cell" style="gap: 5px;">
+                    <input class="t-input qty" name="energia_qtd_110" placeholder="Qtd" type="number" min="0">
+                    <input class="t-input qty" name="energia_qtd_220" placeholder="Qtd" type="number" min="0">
+                  </div>
+                </td>
               </tr>
 
               <!-- PONTO DE INTERNET -->
