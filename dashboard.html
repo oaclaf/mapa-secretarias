@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 
 <head>
@@ -236,7 +236,7 @@
 
     <div class="config-box" id="configBox">
       <label for="scriptUrl"><strong>URL do Web App (Google Apps Script):</strong></label>
-      <input type="text" id="scriptUrl" placeholder="Cole aqui a URL do seu Web App e aperte Enter..." value="">
+      <input type="text" id="scriptUrl" placeholder="https://script.google.com/macros/s/AKfycbyn55G5cRd1gCTJTH_xAoNjJ9xt573vc4T-Jasfofkc2FfHp0AYdOd0HjYKK38SJ4yD/exec" value="">
       <p style="font-size: 12px; color: #666; margin-top: 5px;">* Deixe em branco se for editar no arquivo .html
         futuramente.</p>
     </div>
@@ -267,31 +267,23 @@
   </div>
 
   <script>
-    // Coloque SUA URL DO WEB APP aqui se quiser deixar fixo.
-    let SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyCWyF20slGscay54rctMlTzCW1JAnSQ4IdveA_S1cw6i9Lk1zzaZ1eYVt3XtR-L3SRQg/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyn55G5cRd1gCTJTH_xAoNjJ9xt573vc4T-Jasfofkc2FfHp0AYdOd0HjYKK38SJ4yD/exec";
 
     let globalData = [];
 
-    const urlInput = document.getElementById('scriptUrl');
-    urlInput.addEventListener('change', (e) => {
-      SCRIPT_URL = e.target.value.trim();
-      if (SCRIPT_URL) {
-        fetchData();
-      }
-    });
-
-    // Keys mapeadas da planilha originadas pelo cabecalho do Apps Script
     const keysToSum = [
-      { key: 'Cadeiras — Qtd', label: 'Cadeiras' },
-      { key: 'Mesas — Qtd', label: 'Mesas' },
-      { key: 'Ponto Energia — Qtd', label: 'Pontos de Energia' },
-      { key: 'Ponto Internet — Qtd', label: 'Pontos de Internet' },
-      { key: 'Iluminação — Qtd', label: 'Iluminação' },
-      { key: 'Tenda 3x3 — Qtd', label: 'Tenda 3x3' },
-      { key: 'Tenda 4x4 — Qtd', label: 'Tenda 4x4' },
-      { key: 'Tenda 5x5 — Qtd', label: 'Tenda 5x5' },
-      { key: 'Tenda 6x6 — Qtd', label: 'Tenda 6x6' }
+      { keys: ['Cadeiras — Qtd', 'Cadeiras - Qtd'], label: 'Cadeiras' },
+      { keys: ['Mesas — Qtd', 'Mesas - Qtd'], label: 'Mesas' },
+      { keys: ['Ponto Energia — Qtd', 'Ponto Energia - Qtd'], label: 'Pontos de Energia' },
+      { keys: ['Ponto Internet — Qtd', 'Ponto Internet - Qtd'], label: 'Pontos de Internet' },
+      { keys: ['Iluminação — Qtd', 'Iluminacao - Qtd'], label: 'Iluminação' },
+      { keys: ['Tenda 3x3 — Qtd', 'Tenda 3x3 - Qtd'], label: 'Tenda 3x3' },
+      { keys: ['Tenda 4x4 — Qtd', 'Tenda 4x4 - Qtd'], label: 'Tenda 4x4' },
+      { keys: ['Tenda 5x5 — Qtd', 'Tenda 5x5 - Qtd'], label: 'Tenda 5x5' },
+      { keys: ['Tenda 6x6 — Qtd', 'Tenda 6x6 - Qtd'], label: 'Tenda 6x6' }
     ];
+
+    document.getElementById('configBox').style.display = 'none';
 
     async function fetchData() {
       if (!SCRIPT_URL) {
@@ -304,24 +296,79 @@
       document.getElementById('errorMsg').style.display = 'none';
 
       try {
-        const response = await fetch(SCRIPT_URL + "?action=get_data");
-        const result = await response.json();
+        const result = await loadDashboardData();
 
-        if (result.status === 'ok') {
-          globalData = result.data;
-          populateFilters();
-          updateDashboard('ALL', 'ALL');
-
-          document.getElementById('loading').style.display = 'none';
-          document.getElementById('dashboardContent').style.display = 'block';
-        } else {
-          throw new Error(result.message);
+        if (result.status !== 'ok') {
+          throw new Error(result.message || 'Falha ao carregar dados.');
         }
+
+        globalData = Array.isArray(result.data) ? result.data : [];
+        populateFilters();
+        updateDashboard('ALL', 'ALL');
+
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('dashboardContent').style.display = 'block';
       } catch (err) {
         console.error(err);
         document.getElementById('loading').style.display = 'none';
+        document.getElementById('errorMsg').textContent = 'Não foi possível carregar os dados da dashboard. Verifique a publicação e a permissão de acesso do Apps Script.';
         document.getElementById('errorMsg').style.display = 'block';
       }
+    }
+
+    async function loadDashboardData() {
+      try {
+        const response = await fetch(buildScriptUrl({ action: 'get_data' }), {
+          method: 'GET',
+          redirect: 'follow'
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        return await response.json();
+      } catch (fetchError) {
+        console.warn('Fetch direto falhou; tentando JSONP.', fetchError);
+        return loadDataViaJsonp();
+      }
+    }
+
+    function buildScriptUrl(params) {
+      const url = new URL(SCRIPT_URL);
+      Object.entries(params).forEach(([key, value]) => {
+        url.searchParams.set(key, value);
+      });
+      return url.toString();
+    }
+
+    function loadDataViaJsonp() {
+      return new Promise((resolve, reject) => {
+        const callbackName = `dashboardJsonp_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+        const script = document.createElement('script');
+
+        const cleanup = () => {
+          delete window[callbackName];
+          script.remove();
+        };
+
+        window[callbackName] = (payload) => {
+          cleanup();
+          resolve(payload);
+        };
+
+        script.onerror = () => {
+          cleanup();
+          reject(new Error('Falha ao carregar dados do Apps Script.'));
+        };
+
+        script.src = buildScriptUrl({
+          action: 'get_data',
+          callback: callbackName
+        });
+
+        document.body.appendChild(script);
+      });
     }
 
     function populateFilters() {
@@ -331,26 +378,25 @@
       citySelect.innerHTML = '<option value="ALL">Todas as Cidades</option>';
       secSelect.innerHTML = '<option value="ALL">Todas as Secretarias</option>';
 
-      const cities = [...new Set(globalData.map(item => item['Cidade']).filter(c => c))].sort();
-      const secs = [...new Set(globalData.map(item => item['Secretaria']).filter(s => s))].sort();
+      const cities = [...new Set(globalData.map((item) => item['Cidade']).filter(Boolean))].sort();
+      const secs = [...new Set(globalData.map((item) => item['Secretaria']).filter(Boolean))].sort();
 
-      cities.forEach(city => {
+      cities.forEach((city) => {
         const option = document.createElement('option');
         option.value = city;
         option.textContent = city;
         citySelect.appendChild(option);
       });
 
-      secs.forEach(sec => {
+      secs.forEach((sec) => {
         const option = document.createElement('option');
         option.value = sec;
         option.textContent = sec;
         secSelect.appendChild(option);
       });
 
-      const updateFn = () => updateDashboard(citySelect.value, secSelect.value);
-      citySelect.addEventListener('change', updateFn);
-      secSelect.addEventListener('change', updateFn);
+      citySelect.onchange = () => updateDashboard(citySelect.value, secSelect.value);
+      secSelect.onchange = () => updateDashboard(citySelect.value, secSelect.value);
     }
 
     function updateDashboard(selectedCity, selectedSec) {
@@ -359,47 +405,45 @@
 
       let filteredData = globalData;
       if (selectedCity !== 'ALL') {
-        filteredData = filteredData.filter(item => item['Cidade'] === selectedCity);
+        filteredData = filteredData.filter((item) => item['Cidade'] === selectedCity);
       }
       if (selectedSec !== 'ALL') {
-        filteredData = filteredData.filter(item => item['Secretaria'] === selectedSec);
+        filteredData = filteredData.filter((item) => item['Secretaria'] === selectedSec);
       }
 
       document.getElementById('recordCount').textContent = `${filteredData.length} formulário(s) encontrado(s)`;
 
       const totals = {};
-      keysToSum.forEach(k => totals[k.key] = 0);
+      keysToSum.forEach((item) => {
+        totals[item.label] = 0;
+      });
 
-      filteredData.forEach(row => {
-        keysToSum.forEach(k => {
-          const val = parseInt(row[k.key] || 0, 10);
-          if (!isNaN(val)) {
-            totals[k.key] += val;
+      filteredData.forEach((row) => {
+        keysToSum.forEach((item) => {
+          const matchingKey = item.keys.find((key) => row[key] !== undefined && row[key] !== '');
+          const value = parseInt(matchingKey ? row[matchingKey] : 0, 10);
+          if (!Number.isNaN(value)) {
+            totals[item.label] += value;
           }
         });
       });
 
-      keysToSum.forEach(k => {
-        const value = totals[k.key];
-        // Mostrar todos mesmo zerados, ou você pode querer ocultar os zerados
+      keysToSum.forEach((item) => {
         const card = document.createElement('div');
         card.className = 'metric-card';
         card.innerHTML = `
-          <h3>${k.label}</h3>
-          <div class="metric-value">${value}</div>
+          <h3>${item.label}</h3>
+          <div class="metric-value">${totals[item.label]}</div>
         `;
         container.appendChild(card);
       });
     }
 
-    // Se já tiver URL fixa no código, tenta carregar direto:
     if (SCRIPT_URL) {
-      document.getElementById('configBox').style.display = 'none';
       fetchData();
     } else {
       document.getElementById('loading').style.display = 'none';
     }
-
   </script>
 </body>
 
