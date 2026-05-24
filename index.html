@@ -766,16 +766,17 @@
       <div class="success-card" id="successCard">
         <div class="success-icon">✓</div>
         <h2>Formulário enviado!</h2>
-        <p>Os dados foram salvos na planilha com sucesso.</p>
+        <p>Solicitação enviada. Se os dados não aparecerem de imediato, atualize o dashboard em alguns segundos.</p>
         <button class="btn-novo" onclick="resetForm()">Preencher novo formulário</button>
       </div>
 
     </div>
   </div>
 
+  <script src="app-config.js"></script>
   <script>
     // ── CONFIGURE AQUI: cole a URL do seu Google Apps Script ──
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyCWyF20slGscay54rctMlTzCW1JAnSQ4IdveA_S1cw6i9Lk1zzaZ1eYVt3XtR-L3SRQg/exec";
+    const SCRIPT_URL = window.APP_SCRIPT_URL || "";
 
     const form = document.getElementById("mainForm");
     const btn = document.getElementById("submitBtn");
