@@ -482,22 +482,18 @@
       }
 
       tbody td:nth-child(2)::before {
-        content: "Necessita?";
-      }
-
-      tbody td:nth-child(3)::before {
         content: "Tipo";
       }
 
-      tbody td:nth-child(4)::before {
+      tbody td:nth-child(3)::before {
         content: "Fechamento";
       }
 
-      tbody td:nth-child(5)::before {
+      tbody td:nth-child(4)::before {
         content: "Especificação";
       }
 
-      tbody td:nth-child(6)::before {
+      tbody td:nth-child(5)::before {
         content: "Qtd.";
       }
 
@@ -583,12 +579,11 @@
           <table>
             <thead>
               <tr>
-                <th style="width:14%">Item</th>
-                <th style="width:12%">Necessita?</th>
-                <th style="width:14%">OBS:</th>
-                <th style="width:13%">Fechamento</th>
+                <th style="width:18%">Item</th>
+                <th style="width:20%">OBS:</th>
+                <th style="width:18%">Fechamento</th>
                 <th style="width:30%">Especificação(Ponto Energia)</th>
-                <th style="width:10%">Qtd.</th>
+                <th style="width:14%">Qtd.</th>
               </tr>
             </thead>
             <tbody>
@@ -596,13 +591,6 @@
               <!-- CADEIRAS -->
               <tr>
                 <td class="item-name">Cadeiras</td>
-                <td>
-                  <div class="sel-wrap"><select name="cadeiras_necessita">
-                      <option value="">Selecione</option>
-                      <option>Sim</option>
-                      <option>Não</option>
-                    </select></div>
-                </td>
                 <td><input class="t-input wide" name="cadeiras_tipo" placeholder="OBS:"></td>
                 <td></td>
                 <td></td>
@@ -612,13 +600,6 @@
               <!-- MESAS -->
               <tr>
                 <td class="item-name">Mesas</td>
-                <td>
-                  <div class="sel-wrap"><select name="mesas_necessita">
-                      <option value="">Selecione</option>
-                      <option>Sim</option>
-                      <option>Não</option>
-                    </select></div>
-                </td>
                 <td><input class="t-input wide" name="mesas_tipo" placeholder="OBS:"></td>
                 <td></td>
                 <td></td>
@@ -628,13 +609,6 @@
               <!-- PONTO DE ENERGIA -->
               <tr class="energy-row">
                 <td class="item-name">Ponto de<br>Energia</td>
-                <td>
-                  <div class="sel-wrap"><select name="energia_necessita">
-                      <option value="">Selecione</option>
-                      <option>Sim</option>
-                      <option>Não</option>
-                    </select></div>
-                </td>
                 <td><input class="t-input wide" name="energia_tipo" placeholder="OBS:"></td>
                 <td></td>
                 <td>
@@ -658,13 +632,6 @@
               <!-- PONTO DE INTERNET -->
               <tr>
                 <td class="item-name">Ponto de<br>Internet</td>
-                <td>
-                  <div class="sel-wrap"><select name="internet_necessita">
-                      <option value="">Selecione</option>
-                      <option>Sim</option>
-                      <option>Não</option>
-                    </select></div>
-                </td>
                 <td><input class="t-input wide" name="internet_tipo" placeholder="OBS:"></td>
                 <td></td>
                 <td></td>
@@ -674,31 +641,17 @@
               <!-- ILUMINAÇÃO -->
               <tr>
                 <td class="item-name">Iluminação</td>
-                <td>
-                  <div class="sel-wrap"><select name="iluminacao_necessita">
-                      <option value="">Selecione</option>
-                      <option>Sim</option>
-                      <option>Não</option>
-                    </select></div>
-                </td>
                 <td><input class="t-input wide" name="iluminacao_tipo" placeholder="OBS:"></td>
                 <td></td>
                 <td></td>
                 <td><input class="t-input qty" name="iluminacao_qtd" placeholder="" type="number" min="0"></td>
               </tr>
 
-              <!-- TENDA 3x3 -->
+              <!-- STAND 4x3 -->
               <tr>
-                <td class="item-name">Tenda 3x3</td>
-                <td>
-                  <div class="sel-wrap"><select name="tenda3_necessita">
-                      <option value="">Selecione</option>
-                      <option>Sim</option>
-                      <option>Não</option>
-                    </select></div>
-                </td>
+                <td class="item-name">Stand 4x3</td>
                 <td><input class="t-input wide" name="tenda3_tipo" placeholder="OBS:"></td>
-                <td><input class="t-input wide" name="tenda3_fechamento" placeholder="OBS:"></td>
+                <td></td>
                 <td></td>
                 <td><input class="t-input qty" name="tenda3_qtd" placeholder="" type="number" min="0"></td>
               </tr>
@@ -706,13 +659,6 @@
               <!-- TENDA 4x4 -->
               <tr>
                 <td class="item-name">Tenda 4x4</td>
-                <td>
-                  <div class="sel-wrap"><select name="tenda4_necessita">
-                      <option value="">Selecione</option>
-                      <option>Sim</option>
-                      <option>Não</option>
-                    </select></div>
-                </td>
                 <td><input class="t-input wide" name="tenda4_tipo" placeholder="OBS:"></td>
                 <td><input class="t-input wide" name="tenda4_fechamento" placeholder="OBS:"></td>
                 <td></td>
@@ -722,13 +668,6 @@
               <!-- TENDA 5x5 -->
               <tr>
                 <td class="item-name">Tenda 5x5</td>
-                <td>
-                  <div class="sel-wrap"><select name="tenda5_necessita">
-                      <option value="">Selecione</option>
-                      <option>Sim</option>
-                      <option>Não</option>
-                    </select></div>
-                </td>
                 <td><input class="t-input wide" name="tenda5_tipo" placeholder="OBS:"></td>
                 <td><input class="t-input wide" name="tenda5_fechamento" placeholder="OBS:"></td>
                 <td></td>
@@ -738,13 +677,6 @@
               <!-- TENDA 6x6 -->
               <tr>
                 <td class="item-name">Tenda 6x6</td>
-                <td>
-                  <div class="sel-wrap"><select name="tenda6_necessita">
-                      <option value="">Selecione</option>
-                      <option>Sim</option>
-                      <option>Não</option>
-                    </select></div>
-                </td>
                 <td><input class="t-input wide" name="tenda6_tipo" placeholder="OBS:"></td>
                 <td><input class="t-input wide" name="tenda6_fechamento" placeholder="OBS:"></td>
                 <td></td>
