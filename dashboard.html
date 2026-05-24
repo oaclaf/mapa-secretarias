@@ -52,6 +52,30 @@
       color: #2e7d32;
     }
 
+    .view-toggle {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-left: auto;
+    }
+
+    .toggle-btn {
+      padding: 10px 14px;
+      font-size: 14px;
+      border: 1px solid #1b5e20;
+      border-radius: 999px;
+      background: white;
+      color: #1b5e20;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .toggle-btn.active {
+      background: #1b5e20;
+      color: white;
+    }
+
     select {
       padding: 10px;
       font-size: 16px;
@@ -91,6 +115,34 @@
       font-size: 36px;
       font-weight: bold;
       color: #1b5e20;
+      margin-bottom: 14px;
+    }
+
+    .metric-details {
+      text-align: left;
+      display: grid;
+      gap: 8px;
+      font-size: 13px;
+      color: #555;
+    }
+
+    .metric-detail {
+      padding-top: 8px;
+      border-top: 1px solid #ececec;
+    }
+
+    .metric-detail strong {
+      color: #2e7d32;
+      display: block;
+      margin-bottom: 3px;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    .metric-detail span {
+      display: block;
+      line-height: 1.4;
     }
 
     .loading {
@@ -256,7 +308,11 @@
           <option value="ALL">Todas as Secretarias</option>
         </select>
 
-        <span id="recordCount" style="margin-left: auto; color: #666; font-size: 14px; margin-right: 15px;"></span>
+        <div class="view-toggle" id="viewToggle">
+          <button type="button" class="toggle-btn active" data-view="summary">Resumo</button>
+          <button type="button" class="toggle-btn" data-view="details">Detalhado</button>
+        </div>
+        <span id="recordCount" style="color: #666; font-size: 14px; margin-right: 15px;"></span>
         <button class="export-btn" onclick="window.print()">Exportar PDF</button>
       </div>
 
@@ -271,20 +327,134 @@
     const SCRIPT_URL = window.APP_SCRIPT_URL || "";
 
     let globalData = [];
+    let currentViewMode = 'summary';
 
     const keysToSum = [
-      { keys: ['Cadeiras — Qtd', 'Cadeiras - Qtd'], label: 'Cadeiras' },
-      { keys: ['Mesas — Qtd', 'Mesas - Qtd'], label: 'Mesas' },
-      { keys: ['Ponto Energia — Qtd', 'Ponto Energia - Qtd'], label: 'Pontos de Energia' },
-      { keys: ['Ponto Internet — Qtd', 'Ponto Internet - Qtd'], label: 'Pontos de Internet' },
-      { keys: ['Iluminação — Qtd', 'Iluminacao - Qtd'], label: 'Iluminação' },
-      { keys: ['Tenda 3x3 — Qtd', 'Tenda 3x3 - Qtd'], label: 'Tenda 3x3' },
-      { keys: ['Tenda 4x4 — Qtd', 'Tenda 4x4 - Qtd'], label: 'Tenda 4x4' },
-      { keys: ['Tenda 5x5 — Qtd', 'Tenda 5x5 - Qtd'], label: 'Tenda 5x5' },
-      { keys: ['Tenda 6x6 — Qtd', 'Tenda 6x6 - Qtd'], label: 'Tenda 6x6' }
+      {
+        label: 'Cadeiras',
+        qtyKeys: ['Cadeiras — Qtd', 'Cadeiras - Qtd', 'Cadeiras Qtd'],
+        needKeys: ['Cadeiras — Necessita', 'Cadeiras - Necessita', 'Cadeiras Necessita'],
+        obsKeys: ['Cadeiras — OBS:', 'Cadeiras - OBS:', 'Cadeiras OBS'],
+        closeKeys: ['Cadeiras — Fechamento', 'Cadeiras - Fechamento', 'Cadeiras Fechamento']
+      },
+      {
+        label: 'Mesas',
+        qtyKeys: ['Mesas — Qtd', 'Mesas - Qtd', 'Mesas Qtd'],
+        needKeys: ['Mesas — Necessita', 'Mesas - Necessita', 'Mesas Necessita'],
+        obsKeys: ['Mesas — OBS:', 'Mesas - OBS:', 'Mesas OBS'],
+        closeKeys: ['Mesas — Fechamento', 'Mesas - Fechamento', 'Mesas Fechamento']
+      },
+      {
+        label: 'Pontos de Energia',
+        qtyKeys: ['Ponto Energia — Qtd', 'Ponto Energia - Qtd', 'Ponto Energia Qtd'],
+        needKeys: ['Ponto Energia — Necessita', 'Ponto Energia - Necessita', 'Ponto Energia Necessita'],
+        obsKeys: ['Ponto Energia — OBS:', 'Ponto Energia - OBS:', 'Ponto Energia OBS'],
+        closeKeys: ['Ponto Energia — Fechamento', 'Ponto Energia - Fechamento', 'Ponto Energia Fechamento'],
+        extraTotals: [
+          { label: '110/10A', keys: ['Ponto Energia - Qtd 110/10A', 'Ponto Energia — Qtd 110/10A', 'Ponto Energia Qtd 11010A'] },
+          { label: '220/20A', keys: ['Ponto Energia - Qtd 220/20A', 'Ponto Energia — Qtd 220/20A', 'Ponto Energia Qtd 22020A'] }
+        ]
+      },
+      {
+        label: 'Pontos de Internet',
+        qtyKeys: ['Ponto Internet — Qtd', 'Ponto Internet - Qtd', 'Ponto Internet Qtd'],
+        needKeys: ['Ponto Internet — Necessita', 'Ponto Internet - Necessita', 'Ponto Internet Necessita'],
+        obsKeys: ['Ponto Internet — OBS:', 'Ponto Internet - OBS:', 'Ponto Internet OBS'],
+        closeKeys: ['Ponto Internet — Fechamento', 'Ponto Internet - Fechamento', 'Ponto Internet Fechamento']
+      },
+      {
+        label: 'Iluminação',
+        qtyKeys: ['Iluminação — Qtd', 'Iluminacao - Qtd', 'Iluminacao Qtd'],
+        needKeys: ['Iluminação — Necessita', 'Iluminacao - Necessita', 'Iluminacao Necessita'],
+        obsKeys: ['Iluminação — OBS:', 'Iluminacao - OBS:', 'Iluminacao OBS'],
+        closeKeys: ['Iluminação — Fechamento', 'Iluminacao - Fechamento', 'Iluminacao Fechamento']
+      },
+      {
+        label: 'Tenda 3x3',
+        qtyKeys: ['Tenda 3x3 — Qtd', 'Tenda 3x3 - Qtd', 'Tenda 3x3 Qtd'],
+        needKeys: ['Tenda 3x3 — Necessita', 'Tenda 3x3 - Necessita', 'Tenda 3x3 Necessita'],
+        obsKeys: ['Tenda 3x3 — OBS:', 'Tenda 3x3 - OBS:', 'Tenda 3x3 OBS'],
+        closeKeys: ['Tenda 3x3 — Fechamento', 'Tenda 3x3 - Fechamento', 'Tenda 3x3 Fechamento']
+      },
+      {
+        label: 'Tenda 4x4',
+        qtyKeys: ['Tenda 4x4 — Qtd', 'Tenda 4x4 - Qtd', 'Tenda 4x4 Qtd'],
+        needKeys: ['Tenda 4x4 — Necessita', 'Tenda 4x4 - Necessita', 'Tenda 4x4 Necessita'],
+        obsKeys: ['Tenda 4x4 — OBS:', 'Tenda 4x4 - OBS:', 'Tenda 4x4 OBS'],
+        closeKeys: ['Tenda 4x4 — Fechamento', 'Tenda 4x4 - Fechamento', 'Tenda 4x4 Fechamento']
+      },
+      {
+        label: 'Tenda 5x5',
+        qtyKeys: ['Tenda 5x5 — Qtd', 'Tenda 5x5 - Qtd', 'Tenda 5x5 Qtd'],
+        needKeys: ['Tenda 5x5 — Necessita', 'Tenda 5x5 - Necessita', 'Tenda 5x5 Necessita'],
+        obsKeys: ['Tenda 5x5 — OBS:', 'Tenda 5x5 - OBS:', 'Tenda 5x5 OBS'],
+        closeKeys: ['Tenda 5x5 — Fechamento', 'Tenda 5x5 - Fechamento', 'Tenda 5x5 Fechamento']
+      },
+      {
+        label: 'Tenda 6x6',
+        qtyKeys: ['Tenda 6x6 — Qtd', 'Tenda 6x6 - Qtd', 'Tenda 6x6 Qtd'],
+        needKeys: ['Tenda 6x6 — Necessita', 'Tenda 6x6 - Necessita', 'Tenda 6x6 Necessita'],
+        obsKeys: ['Tenda 6x6 — OBS:', 'Tenda 6x6 - OBS:', 'Tenda 6x6 OBS'],
+        closeKeys: ['Tenda 6x6 — Fechamento', 'Tenda 6x6 - Fechamento', 'Tenda 6x6 Fechamento']
+      }
     ];
 
+    function normalizeHeader(value) {
+      return String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-zA-Z0-9]/g, '')
+        .toLowerCase();
+    }
+
+    function getMetricValue(row, aliases) {
+      const normalizedAliases = aliases.map(normalizeHeader);
+
+      for (const [key, rawValue] of Object.entries(row)) {
+        const normalizedKey = normalizeHeader(key);
+        if (!normalizedAliases.includes(normalizedKey)) {
+          continue;
+        }
+
+        const parsedValue = parseInt(rawValue, 10);
+        return Number.isNaN(parsedValue) ? 0 : parsedValue;
+      }
+
+      return 0;
+    }
+
+    function getMetricText(row, aliases) {
+      const normalizedAliases = aliases.map(normalizeHeader);
+
+      for (const [key, rawValue] of Object.entries(row)) {
+        if (!normalizedAliases.includes(normalizeHeader(key))) {
+          continue;
+        }
+
+        const text = String(rawValue || '').trim();
+        if (text) {
+          return text;
+        }
+      }
+
+      return '';
+    }
+
+    function summarizeTexts(values, fallbackText) {
+      const uniqueValues = [...new Set(values.map((value) => String(value || '').trim()).filter(Boolean))];
+      if (!uniqueValues.length) {
+        return fallbackText;
+      }
+
+      if (uniqueValues.length <= 2) {
+        return uniqueValues.join(' | ');
+      }
+
+      return `${uniqueValues.slice(0, 2).join(' | ')} +${uniqueValues.length - 2} mais`;
+    }
+
     document.getElementById('configBox').style.display = 'none';
+    setupViewToggle();
 
     async function fetchData() {
       if (!SCRIPT_URL) {
@@ -400,6 +570,20 @@
       secSelect.onchange = () => updateDashboard(citySelect.value, secSelect.value);
     }
 
+    function setupViewToggle() {
+      const toggleButtons = document.querySelectorAll('#viewToggle .toggle-btn');
+      toggleButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          currentViewMode = button.dataset.view;
+          toggleButtons.forEach((item) => item.classList.toggle('active', item === button));
+          updateDashboard(
+            document.getElementById('citySelect').value,
+            document.getElementById('secSelect').value
+          );
+        });
+      });
+    }
+
     function updateDashboard(selectedCity, selectedSec) {
       const container = document.getElementById('metricsContainer');
       container.innerHTML = '';
@@ -415,26 +599,88 @@
       document.getElementById('recordCount').textContent = `${filteredData.length} formulário(s) encontrado(s)`;
 
       const totals = {};
+      const details = {};
       keysToSum.forEach((item) => {
         totals[item.label] = 0;
+        details[item.label] = {
+          need: [],
+          obs: [],
+          close: [],
+          requestCount: 0,
+          extraTotals: {}
+        };
+
+        (item.extraTotals || []).forEach((extra) => {
+          details[item.label].extraTotals[extra.label] = 0;
+        });
       });
 
       filteredData.forEach((row) => {
         keysToSum.forEach((item) => {
-          const matchingKey = item.keys.find((key) => row[key] !== undefined && row[key] !== '');
-          const value = parseInt(matchingKey ? row[matchingKey] : 0, 10);
-          if (!Number.isNaN(value)) {
-            totals[item.label] += value;
+          const qtyValue = getMetricValue(row, item.qtyKeys);
+          const needText = getMetricText(row, item.needKeys);
+          const obsText = getMetricText(row, item.obsKeys);
+          const closeText = getMetricText(row, item.closeKeys);
+
+          totals[item.label] += qtyValue;
+
+          if (needText || qtyValue > 0 || obsText || closeText) {
+            details[item.label].requestCount += 1;
           }
+
+          if (needText) {
+            details[item.label].need.push(needText);
+          }
+
+          if (obsText) {
+            details[item.label].obs.push(obsText);
+          }
+
+          if (closeText) {
+            details[item.label].close.push(closeText);
+          }
+
+          (item.extraTotals || []).forEach((extra) => {
+            details[item.label].extraTotals[extra.label] += getMetricValue(row, extra.keys);
+          });
         });
       });
 
       keysToSum.forEach((item) => {
+        const cardDetails = details[item.label];
+        const extraDetailsHtml = Object.entries(cardDetails.extraTotals)
+          .map(([label, value]) => `
+            <div class="metric-detail">
+              <strong>${label}</strong>
+              <span>${value}</span>
+            </div>
+          `)
+          .join('');
+
         const card = document.createElement('div');
         card.className = 'metric-card';
         card.innerHTML = `
           <h3>${item.label}</h3>
           <div class="metric-value">${totals[item.label]}</div>
+          <div class="metric-details" style="display: ${currentViewMode === 'details' ? 'grid' : 'none'};">
+            <div class="metric-detail">
+              <strong>Solicitações</strong>
+              <span>${cardDetails.requestCount}</span>
+            </div>
+            <div class="metric-detail">
+              <strong>Necessita</strong>
+              <span>${summarizeTexts(cardDetails.need, 'Sem registro')}</span>
+            </div>
+            <div class="metric-detail">
+              <strong>OBS</strong>
+              <span>${summarizeTexts(cardDetails.obs, 'Sem observação')}</span>
+            </div>
+            <div class="metric-detail">
+              <strong>Fechamento</strong>
+              <span>${summarizeTexts(cardDetails.close, 'Sem fechamento')}</span>
+            </div>
+            ${extraDetailsHtml}
+          </div>
         `;
         container.appendChild(card);
       });
