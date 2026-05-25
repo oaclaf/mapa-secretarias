@@ -76,6 +76,14 @@
       color: white;
     }
 
+    .toggle-btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.45;
+      background: #f2f2f2;
+      color: #7a7a7a;
+      border-color: #cfcfcf;
+    }
+
     select {
       padding: 10px;
       font-size: 16px;
@@ -143,6 +151,40 @@
     .metric-detail span {
       display: block;
       line-height: 1.4;
+    }
+
+    .secretary-sections {
+      display: grid;
+      gap: 28px;
+    }
+
+    .secretary-section {
+      background: #f9fcf9;
+      border: 1px solid #d7e6d7;
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .secretary-section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 18px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid #dfe9df;
+    }
+
+    .secretary-section-header h2 {
+      margin: 0 0 6px 0;
+      color: #1b5e20;
+      font-size: 24px;
+    }
+
+    .secretary-section-meta {
+      color: #666;
+      font-size: 14px;
+      line-height: 1.5;
     }
 
     .loading {
@@ -419,6 +461,7 @@
         <div class="view-toggle" id="viewToggle">
           <button type="button" class="toggle-btn active" data-view="summary">Resumo</button>
           <button type="button" class="toggle-btn" data-view="details">Detalhado</button>
+          <button type="button" class="toggle-btn" data-view="by-secretary">Por Secretaria</button>
         </div>
         <span id="recordCount" style="color: #666; font-size: 14px; margin-right: 15px;"></span>
         <button class="export-btn" onclick="exportFilteredReport()">Exportar PDF</button>
@@ -652,6 +695,74 @@
       return { totals, details };
     }
 
+    function buildMetricCardsHtml(snapshot, viewMode) {
+      return keysToSum.map((item) => {
+        const cardDetails = snapshot.details[item.label];
+        const extraDetailsHtml = Object.entries(cardDetails.extraTotals)
+          .map(([label, value]) => `
+            <div class="metric-detail">
+              <strong>${label}</strong>
+              <span>${value}</span>
+            </div>
+          `)
+          .join('');
+
+        return `
+          <div class="metric-card">
+            <h3>${item.label}</h3>
+            <div class="metric-value">${snapshot.totals[item.label]}</div>
+            <div class="metric-details" style="display: ${viewMode === 'details' ? 'grid' : 'none'};">
+              <div class="metric-detail">
+                <strong>Solicitações</strong>
+                <span>${cardDetails.requestCount}</span>
+              </div>
+              <div class="metric-detail">
+                <strong>OBS</strong>
+                <span>${summarizeTexts(cardDetails.obs, 'Sem observação')}</span>
+              </div>
+              <div class="metric-detail" style="display: ${item.closeKeys.length ? 'block' : 'none'};">
+                <strong>Fechamento</strong>
+                <span>${summarizeTexts(cardDetails.close, 'Sem fechamento')}</span>
+              </div>
+              ${extraDetailsHtml}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderGroupedBySecretary(container, filteredData, selectedCity) {
+      const cityLabel = selectedCity === 'ALL' ? 'Todas as Cidades' : selectedCity;
+      const groupedBySecretary = [...new Set(filteredData.map((item) => item['Secretaria']).filter(Boolean))].sort();
+
+      container.className = 'secretary-sections';
+      container.innerHTML = groupedBySecretary.map((secretaria) => {
+        const secretariaData = filteredData.filter((item) => item['Secretaria'] === secretaria);
+        const secretariaSnapshot = buildMetricSnapshot(secretariaData);
+        const cityValues = [...new Set(secretariaData.map((item) => item['Cidade']).filter(Boolean))];
+        const secretaryCityLabel = selectedCity === 'ALL'
+          ? (cityValues.length ? cityValues.join(' | ') : cityLabel)
+          : cityLabel;
+
+        return `
+          <section class="secretary-section">
+            <div class="secretary-section-header">
+              <div>
+                <h2>${secretaria}</h2>
+                <div class="secretary-section-meta">
+                  <div><strong>Cidade:</strong> ${secretaryCityLabel}</div>
+                  <div><strong>Formulários:</strong> ${secretariaData.length}</div>
+                </div>
+              </div>
+            </div>
+            <div class="metrics">
+              ${buildMetricCardsHtml(secretariaSnapshot, 'details')}
+            </div>
+          </section>
+        `;
+      }).join('');
+    }
+
     function renderPrintSection(title, cityLabel, secLabel, filteredData, snapshot, emittedAt) {
       const summaryHtml = keysToSum.map((item) => `
         <div class="print-summary-card">
@@ -869,6 +980,9 @@
       const toggleButtons = document.querySelectorAll('#viewToggle .toggle-btn');
       toggleButtons.forEach((button) => {
         button.addEventListener('click', () => {
+          if (button.disabled) {
+            return;
+          }
           currentViewMode = button.dataset.view;
           toggleButtons.forEach((item) => item.classList.toggle('active', item === button));
           updateDashboard(
@@ -879,49 +993,38 @@
       });
     }
 
+    function syncViewToggle(selectedSec) {
+      const bySecretaryButton = document.querySelector('#viewToggle [data-view="by-secretary"]');
+      const toggleButtons = document.querySelectorAll('#viewToggle .toggle-btn');
+      const allowBySecretary = selectedSec === 'ALL';
+
+      bySecretaryButton.disabled = !allowBySecretary;
+
+      if (!allowBySecretary && currentViewMode === 'by-secretary') {
+        currentViewMode = 'details';
+      }
+
+      toggleButtons.forEach((button) => {
+        button.classList.toggle('active', button.dataset.view === currentViewMode);
+      });
+    }
+
     function updateDashboard(selectedCity, selectedSec) {
       const container = document.getElementById('metricsContainer');
       container.innerHTML = '';
 
       const filteredData = getFilteredData(selectedCity, selectedSec);
+      syncViewToggle(selectedSec);
 
       document.getElementById('recordCount').textContent = `${filteredData.length} formulário(s) encontrado(s)`;
       const snapshot = buildMetricSnapshot(filteredData);
 
-      keysToSum.forEach((item) => {
-        const cardDetails = snapshot.details[item.label];
-        const extraDetailsHtml = Object.entries(cardDetails.extraTotals)
-          .map(([label, value]) => `
-            <div class="metric-detail">
-              <strong>${label}</strong>
-              <span>${value}</span>
-            </div>
-          `)
-          .join('');
-
-        const card = document.createElement('div');
-        card.className = 'metric-card';
-        card.innerHTML = `
-          <h3>${item.label}</h3>
-          <div class="metric-value">${snapshot.totals[item.label]}</div>
-          <div class="metric-details" style="display: ${currentViewMode === 'details' ? 'grid' : 'none'};">
-            <div class="metric-detail">
-              <strong>Solicitações</strong>
-              <span>${cardDetails.requestCount}</span>
-            </div>
-            <div class="metric-detail">
-              <strong>OBS</strong>
-              <span>${summarizeTexts(cardDetails.obs, 'Sem observação')}</span>
-            </div>
-            <div class="metric-detail" style="display: ${item.closeKeys.length ? 'block' : 'none'};">
-              <strong>Fechamento</strong>
-              <span>${summarizeTexts(cardDetails.close, 'Sem fechamento')}</span>
-            </div>
-            ${extraDetailsHtml}
-          </div>
-        `;
-        container.appendChild(card);
-      });
+      if (currentViewMode === 'by-secretary' && selectedSec === 'ALL') {
+        renderGroupedBySecretary(container, filteredData, selectedCity);
+      } else {
+        container.className = 'metrics';
+        container.innerHTML = buildMetricCardsHtml(snapshot, currentViewMode);
+      }
 
       renderPrintSheet(selectedCity, selectedSec, filteredData, snapshot);
     }
