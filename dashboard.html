@@ -192,6 +192,105 @@
       background-color: #2e7d32;
     }
 
+    .print-sheet {
+      display: none;
+      margin-top: 24px;
+      border: 1px solid #d7e6d7;
+      border-radius: 12px;
+      padding: 24px;
+      background: #fcfffc;
+    }
+
+    .print-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      align-items: flex-start;
+      border-bottom: 2px solid #1b5e20;
+      padding-bottom: 16px;
+      margin-bottom: 20px;
+    }
+
+    .print-header h2 {
+      margin: 0 0 8px 0;
+      color: #1b5e20;
+      font-size: 28px;
+    }
+
+    .print-meta {
+      display: grid;
+      gap: 4px;
+      font-size: 14px;
+      color: #444;
+    }
+
+    .print-summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .print-summary-card {
+      border: 1px solid #d8e5d8;
+      border-radius: 10px;
+      padding: 14px;
+      background: white;
+    }
+
+    .print-summary-card strong {
+      display: block;
+      font-size: 13px;
+      color: #2e7d32;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+
+    .print-summary-card span {
+      font-size: 28px;
+      font-weight: bold;
+      color: #1b5e20;
+    }
+
+    .print-items {
+      display: grid;
+      gap: 16px;
+    }
+
+    .print-item {
+      border: 1px solid #d8e5d8;
+      border-radius: 10px;
+      padding: 16px;
+      background: white;
+    }
+
+    .print-item h3 {
+      margin: 0 0 12px 0;
+      color: #1b5e20;
+      font-size: 18px;
+    }
+
+    .print-item-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+
+    .print-field {
+      border-top: 1px solid #ececec;
+      padding-top: 10px;
+      font-size: 14px;
+      color: #444;
+    }
+
+    .print-field strong {
+      display: block;
+      margin-bottom: 4px;
+      color: #2e7d32;
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+
     @media (max-width: 768px) {
       .filters {
         flex-direction: column;
@@ -221,6 +320,11 @@
         margin-top: 5px;
       }
 
+      .view-toggle {
+        margin-left: 0;
+        width: 100%;
+      }
+
       .header {
         padding: 15px 10px;
       }
@@ -243,7 +347,10 @@
       .config-box,
       #errorMsg,
       #loading,
-      .export-btn {
+      .export-btn,
+      .filters,
+      .metrics,
+      .view-toggle {
         display: none !important;
       }
 
@@ -261,17 +368,18 @@
         margin: 0;
       }
 
-      .filters {
-        background: transparent;
-        border: 1px solid #ccc;
-        padding: 10px;
-        margin-bottom: 20px;
-      }
-
       .metric-card {
         border: 1px solid #ccc !important;
         box-shadow: none !important;
         break-inside: avoid;
+      }
+
+      .print-sheet {
+        display: block !important;
+        border: none;
+        border-radius: 0;
+        padding: 0;
+        margin: 0;
       }
     }
   </style>
@@ -313,12 +421,14 @@
           <button type="button" class="toggle-btn" data-view="details">Detalhado</button>
         </div>
         <span id="recordCount" style="color: #666; font-size: 14px; margin-right: 15px;"></span>
-        <button class="export-btn" onclick="window.print()">Exportar PDF</button>
+        <button class="export-btn" onclick="exportFilteredReport()">Exportar PDF</button>
       </div>
 
       <div class="metrics" id="metricsContainer">
         <!-- Cards serão inseridos aqui via JS -->
       </div>
+
+      <div class="print-sheet" id="printSheet"></div>
     </div>
   </div>
 
@@ -400,6 +510,31 @@
 
     function getMetricValue(row, aliases) {
       const normalizedAliases = aliases.map(normalizeHeader);
+      let fallbackValue = 0;
+
+      for (const [key, rawValue] of Object.entries(row)) {
+        const normalizedKey = normalizeHeader(key);
+        if (!normalizedAliases.includes(normalizedKey)) {
+          continue;
+        }
+
+        const textValue = String(rawValue || '').trim();
+        if (!textValue) {
+          continue;
+        }
+
+        const parsedValue = parseInt(rawValue, 10);
+        if (!Number.isNaN(parsedValue)) {
+          return parsedValue;
+        }
+      }
+
+      return fallbackValue;
+    }
+
+    function getMetricSum(row, aliases) {
+      const normalizedAliases = aliases.map(normalizeHeader);
+      let total = 0;
 
       for (const [key, rawValue] of Object.entries(row)) {
         const normalizedKey = normalizeHeader(key);
@@ -408,10 +543,12 @@
         }
 
         const parsedValue = parseInt(rawValue, 10);
-        return Number.isNaN(parsedValue) ? 0 : parsedValue;
+        if (!Number.isNaN(parsedValue)) {
+          total += parsedValue;
+        }
       }
 
-      return 0;
+      return total;
     }
 
     function getMetricText(row, aliases) {
@@ -442,6 +579,151 @@
       }
 
       return `${uniqueValues.slice(0, 2).join(' | ')} +${uniqueValues.length - 2} mais`;
+    }
+
+    function getFilteredData(selectedCity, selectedSec) {
+      let filteredData = globalData;
+
+      if (selectedCity !== 'ALL') {
+        filteredData = filteredData.filter((item) => item['Cidade'] === selectedCity);
+      }
+
+      if (selectedSec !== 'ALL') {
+        filteredData = filteredData.filter((item) => item['Secretaria'] === selectedSec);
+      }
+
+      return filteredData;
+    }
+
+    function buildMetricSnapshot(filteredData) {
+      const totals = {};
+      const details = {};
+
+      keysToSum.forEach((item) => {
+        totals[item.label] = 0;
+        details[item.label] = {
+          obs: [],
+          close: [],
+          requestCount: 0,
+          extraTotals: {}
+        };
+
+        (item.extraTotals || []).forEach((extra) => {
+          details[item.label].extraTotals[extra.label] = 0;
+        });
+      });
+
+      filteredData.forEach((row) => {
+        keysToSum.forEach((item) => {
+          const extraTotalValue = (item.extraTotals || []).reduce(
+            (sum, extra) => sum + getMetricSum(row, extra.keys),
+            0
+          );
+          const qtyValue = getMetricValue(row, item.qtyKeys) || extraTotalValue;
+          const obsText = getMetricText(row, item.obsKeys);
+          const closeText = item.closeKeys.length ? getMetricText(row, item.closeKeys) : '';
+
+          totals[item.label] += qtyValue;
+
+          if (qtyValue > 0 || obsText || closeText) {
+            details[item.label].requestCount += 1;
+          }
+
+          if (obsText) {
+            details[item.label].obs.push(obsText);
+          }
+
+          if (closeText) {
+            details[item.label].close.push(closeText);
+          }
+
+          (item.extraTotals || []).forEach((extra) => {
+            details[item.label].extraTotals[extra.label] += getMetricSum(row, extra.keys);
+          });
+        });
+      });
+
+      return { totals, details };
+    }
+
+    function renderPrintSheet(selectedCity, selectedSec, filteredData, snapshot) {
+      const printSheet = document.getElementById('printSheet');
+      const now = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+      const cityLabel = selectedCity === 'ALL' ? 'Todas as Cidades' : selectedCity;
+      const secLabel = selectedSec === 'ALL' ? 'Todas as Secretarias' : selectedSec;
+
+      const summaryHtml = keysToSum.map((item) => `
+        <div class="print-summary-card">
+          <strong>${item.label}</strong>
+          <span>${snapshot.totals[item.label]}</span>
+        </div>
+      `).join('');
+
+      const itemsHtml = keysToSum.map((item) => {
+        const cardDetails = snapshot.details[item.label];
+        const extraFields = Object.entries(cardDetails.extraTotals)
+          .map(([label, value]) => `
+            <div class="print-field">
+              <strong>${label}</strong>
+              <span>${value}</span>
+            </div>
+          `)
+          .join('');
+
+        return `
+          <div class="print-item">
+            <h3>${item.label}</h3>
+            <div class="print-item-grid">
+              <div class="print-field">
+                <strong>Quantidade Total</strong>
+                <span>${snapshot.totals[item.label]}</span>
+              </div>
+              <div class="print-field">
+                <strong>Solicitações</strong>
+                <span>${cardDetails.requestCount}</span>
+              </div>
+              <div class="print-field">
+                <strong>OBS</strong>
+                <span>${summarizeTexts(cardDetails.obs, 'Sem observação')}</span>
+              </div>
+              ${item.closeKeys.length ? `
+                <div class="print-field">
+                  <strong>Fechamento</strong>
+                  <span>${summarizeTexts(cardDetails.close, 'Sem fechamento')}</span>
+                </div>
+              ` : ''}
+              ${extraFields}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      printSheet.innerHTML = `
+        <div class="print-header">
+          <div>
+            <h2>Ficha da Secretaria</h2>
+            <div class="print-meta">
+              <span><strong>Cidade:</strong> ${cityLabel}</span>
+              <span><strong>Secretaria:</strong> ${secLabel}</span>
+              <span><strong>Formulários:</strong> ${filteredData.length}</span>
+            </div>
+          </div>
+          <div class="print-meta">
+            <span><strong>Emitido em:</strong> ${now}</span>
+          </div>
+        </div>
+        <div class="print-summary">${summaryHtml}</div>
+        <div class="print-items">${itemsHtml}</div>
+      `;
+    }
+
+    function exportFilteredReport() {
+      const selectedCity = document.getElementById('citySelect').value;
+      const selectedSec = document.getElementById('secSelect').value;
+      const filteredData = getFilteredData(selectedCity, selectedSec);
+      const snapshot = buildMetricSnapshot(filteredData);
+      renderPrintSheet(selectedCity, selectedSec, filteredData, snapshot);
+      window.print();
     }
 
     document.getElementById('configBox').style.display = 'none';
@@ -579,64 +861,13 @@
       const container = document.getElementById('metricsContainer');
       container.innerHTML = '';
 
-      let filteredData = globalData;
-      if (selectedCity !== 'ALL') {
-        filteredData = filteredData.filter((item) => item['Cidade'] === selectedCity);
-      }
-      if (selectedSec !== 'ALL') {
-        filteredData = filteredData.filter((item) => item['Secretaria'] === selectedSec);
-      }
+      const filteredData = getFilteredData(selectedCity, selectedSec);
 
       document.getElementById('recordCount').textContent = `${filteredData.length} formulário(s) encontrado(s)`;
-
-      const totals = {};
-      const details = {};
-      keysToSum.forEach((item) => {
-        totals[item.label] = 0;
-        details[item.label] = {
-          obs: [],
-          close: [],
-          requestCount: 0,
-          extraTotals: {}
-        };
-
-        (item.extraTotals || []).forEach((extra) => {
-          details[item.label].extraTotals[extra.label] = 0;
-        });
-      });
-
-      filteredData.forEach((row) => {
-        keysToSum.forEach((item) => {
-          const extraTotalValue = (item.extraTotals || []).reduce(
-            (sum, extra) => sum + getMetricValue(row, extra.keys),
-            0
-          );
-          const qtyValue = getMetricValue(row, item.qtyKeys) || extraTotalValue;
-          const obsText = getMetricText(row, item.obsKeys);
-          const closeText = item.closeKeys.length ? getMetricText(row, item.closeKeys) : '';
-
-          totals[item.label] += qtyValue;
-
-          if (qtyValue > 0 || obsText || closeText) {
-            details[item.label].requestCount += 1;
-          }
-
-          if (obsText) {
-            details[item.label].obs.push(obsText);
-          }
-
-          if (closeText) {
-            details[item.label].close.push(closeText);
-          }
-
-          (item.extraTotals || []).forEach((extra) => {
-            details[item.label].extraTotals[extra.label] += getMetricValue(row, extra.keys);
-          });
-        });
-      });
+      const snapshot = buildMetricSnapshot(filteredData);
 
       keysToSum.forEach((item) => {
-        const cardDetails = details[item.label];
+        const cardDetails = snapshot.details[item.label];
         const extraDetailsHtml = Object.entries(cardDetails.extraTotals)
           .map(([label, value]) => `
             <div class="metric-detail">
@@ -650,7 +881,7 @@
         card.className = 'metric-card';
         card.innerHTML = `
           <h3>${item.label}</h3>
-          <div class="metric-value">${totals[item.label]}</div>
+          <div class="metric-value">${snapshot.totals[item.label]}</div>
           <div class="metric-details" style="display: ${currentViewMode === 'details' ? 'grid' : 'none'};">
             <div class="metric-detail">
               <strong>Solicitações</strong>
@@ -669,6 +900,8 @@
         `;
         container.appendChild(card);
       });
+
+      renderPrintSheet(selectedCity, selectedSec, filteredData, snapshot);
     }
 
     if (SCRIPT_URL) {
