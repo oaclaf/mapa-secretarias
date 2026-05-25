@@ -423,6 +423,42 @@
         padding: 0;
         margin: 0;
       }
+
+      body.print-live-dashboard .header,
+      body.print-live-dashboard .print-sheet {
+        display: none !important;
+      }
+
+      body.print-live-dashboard .dashboard-panel {
+        display: block !important;
+      }
+
+      body.print-live-dashboard #metricsContainer,
+      body.print-live-dashboard .secretary-sections,
+      body.print-live-dashboard .secretary-section,
+      body.print-live-dashboard .secretary-section .metrics {
+        display: grid !important;
+      }
+
+      body.print-live-dashboard #metricsContainer {
+        gap: 24px;
+      }
+
+      body.print-live-dashboard .secretary-section {
+        border: 1px solid #d7e6d7 !important;
+        border-radius: 12px;
+        padding: 16px;
+        background: white !important;
+        break-inside: avoid;
+      }
+
+      body.print-live-dashboard .secretary-section-header {
+        display: flex !important;
+      }
+
+      body.print-live-dashboard .metric-details {
+        display: grid !important;
+      }
     }
   </style>
 </head>
@@ -855,6 +891,15 @@
       const selectedSec = document.getElementById('secSelect').value;
       const filteredData = getFilteredData(selectedCity, selectedSec);
       const snapshot = buildMetricSnapshot(filteredData);
+      const useLiveDashboardPrint = currentViewMode === 'by-secretary' && selectedSec === 'ALL';
+
+      if (useLiveDashboardPrint) {
+        document.body.classList.add('print-live-dashboard');
+        window.print();
+        document.body.classList.remove('print-live-dashboard');
+        return;
+      }
+
       renderPrintSheet(selectedCity, selectedSec, filteredData, snapshot);
       window.print();
     }
