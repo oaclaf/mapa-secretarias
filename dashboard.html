@@ -481,6 +481,12 @@
         closeKeys: []
       },
       {
+        label: 'Tenda 3x3',
+        qtyKeys: ['Tenda 3x3 Nova — Qtd', 'Tenda 3x3 Nova - Qtd', 'Tenda 3x3 Nova Qtd', 'Tenda 3x3 Separada — Qtd', 'Tenda 3x3 Separada - Qtd', 'Tenda 3x3 Separada Qtd'],
+        obsKeys: ['Tenda 3x3 Nova — OBS:', 'Tenda 3x3 Nova - OBS:', 'Tenda 3x3 Nova OBS', 'Tenda 3x3 Separada — OBS:', 'Tenda 3x3 Separada - OBS:', 'Tenda 3x3 Separada OBS'],
+        closeKeys: ['Tenda 3x3 Nova — Fechamento', 'Tenda 3x3 Nova - Fechamento', 'Tenda 3x3 Nova Fechamento', 'Tenda 3x3 Separada — Fechamento', 'Tenda 3x3 Separada - Fechamento', 'Tenda 3x3 Separada Fechamento']
+      },
+      {
         label: 'Tenda 4x4',
         qtyKeys: ['Tenda 4x4 — Qtd', 'Tenda 4x4 - Qtd', 'Tenda 4x4 Qtd'],
         obsKeys: ['Tenda 4x4 — OBS:', 'Tenda 4x4 - OBS:', 'Tenda 4x4 OBS'],
@@ -646,12 +652,7 @@
       return { totals, details };
     }
 
-    function renderPrintSheet(selectedCity, selectedSec, filteredData, snapshot) {
-      const printSheet = document.getElementById('printSheet');
-      const now = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-      const cityLabel = selectedCity === 'ALL' ? 'Todas as Cidades' : selectedCity;
-      const secLabel = selectedSec === 'ALL' ? 'Todas as Secretarias' : selectedSec;
-
+    function renderPrintSection(title, cityLabel, secLabel, filteredData, snapshot, emittedAt) {
       const summaryHtml = keysToSum.map((item) => `
         <div class="print-summary-card">
           <strong>${item.label}</strong>
@@ -698,23 +699,44 @@
         `;
       }).join('');
 
-      printSheet.innerHTML = `
-        <div class="print-header">
-          <div>
-            <h2>Ficha da Secretaria</h2>
+      return `
+        <section class="print-section">
+          <div class="print-header">
+            <div>
+              <h2>${title}</h2>
+              <div class="print-meta">
+                <span><strong>Cidade:</strong> ${cityLabel}</span>
+                <span><strong>Secretaria:</strong> ${secLabel}</span>
+                <span><strong>Formulários:</strong> ${filteredData.length}</span>
+              </div>
+            </div>
             <div class="print-meta">
-              <span><strong>Cidade:</strong> ${cityLabel}</span>
-              <span><strong>Secretaria:</strong> ${secLabel}</span>
-              <span><strong>Formulários:</strong> ${filteredData.length}</span>
+              <span><strong>Emitido em:</strong> ${emittedAt}</span>
             </div>
           </div>
-          <div class="print-meta">
-            <span><strong>Emitido em:</strong> ${now}</span>
-          </div>
-        </div>
-        <div class="print-summary">${summaryHtml}</div>
-        <div class="print-items">${itemsHtml}</div>
+          <div class="print-summary">${summaryHtml}</div>
+          <div class="print-items">${itemsHtml}</div>
+        </section>
       `;
+    }
+
+    function renderPrintSheet(selectedCity, selectedSec, filteredData, snapshot) {
+      const printSheet = document.getElementById('printSheet');
+      const now = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+      const cityLabel = selectedCity === 'ALL' ? 'Todas as Cidades' : selectedCity;
+      const secLabel = selectedSec === 'ALL' ? 'Todas as Secretarias' : selectedSec;
+
+      if (selectedSec === 'ALL') {
+        const groupedBySecretary = [...new Set(filteredData.map((item) => item['Secretaria']).filter(Boolean))].sort();
+        printSheet.innerHTML = groupedBySecretary.map((secretaria) => {
+          const secretariaData = filteredData.filter((item) => item['Secretaria'] === secretaria);
+          const secretariaSnapshot = buildMetricSnapshot(secretariaData);
+          return renderPrintSection('Ficha da Secretaria', cityLabel, secretaria, secretariaData, secretariaSnapshot, now);
+        }).join('');
+        return;
+      }
+
+      printSheet.innerHTML = renderPrintSection('Ficha da Secretaria', cityLabel, secLabel, filteredData, snapshot, now);
     }
 
     function exportFilteredReport() {
